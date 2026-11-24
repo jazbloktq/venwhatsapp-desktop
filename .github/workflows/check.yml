@@ -5,27 +5,13 @@ on:
   pull_request:
   workflow_dispatch:
 
-# Compile-check on all three desktop targets. Catches platform-specific code
-# (WebKitGTK / WebView2 / WKWebView paths) that can't be built on a single OS.
+# Venwhatsapp Desktop currently ships Windows installers, so keep its required
+# compile and behavior checks on the supported Windows target.
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: ubuntu-22.04
-          - platform: windows-latest
-          - platform: macos-latest
-    runs-on: ${{ matrix.platform }}
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Install Linux deps
-        if: matrix.platform == 'ubuntu-22.04'
-        run: |
-          sudo apt update
-          sudo apt install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
-            libxdo-dev libdbus-1-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev libhunspell-dev patchelf
 
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
 
@@ -34,7 +20,6 @@ jobs:
           workspaces: "./src-tauri -> target"
 
       - name: cargo fmt
-        if: matrix.platform == 'ubuntu-22.04'
         working-directory: src-tauri
         run: cargo fmt --check
 
@@ -81,8 +66,8 @@ jobs:
       - name: app-banner hook tests
         run: node --test src-tauri/resources/upsell.test.mjs
 
-      # Linux video attach (WebKitGTK): blob media preload, canplaythrough,
-      # parking detached videos, refusing a video given to <img>.
+      # Media recovery: blob preload, canplaythrough, parking detached videos,
+      # and refusing a video given to <img>.
       - name: media.js tests
         run: node src-tauri/resources/media.test.mjs
 

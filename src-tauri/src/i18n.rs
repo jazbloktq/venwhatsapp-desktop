@@ -5,7 +5,6 @@
 use std::borrow::Cow;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Lang {
-    PtBr,
     En,
 }
 
@@ -18,10 +17,7 @@ impl Lang {
     }
 
     pub fn code(self) -> &'static str {
-        match self {
-            Lang::PtBr => EN,
-            Lang::En => EN,
-        }
+        EN
     }
 }
 
@@ -50,11 +46,8 @@ pub fn tr(s: &str) -> Cow<'_, str> {
     tr_in(current(), s)
 }
 
-pub fn tr_in(lang: Lang, s: &str) -> Cow<'_, str> {
-    match lang {
-        Lang::PtBr => Cow::Borrowed(s),
-        Lang::En => english(s).map_or(Cow::Borrowed(s), Cow::Borrowed),
-    }
+pub fn tr_in(_lang: Lang, s: &str) -> Cow<'_, str> {
+    english(s).map_or(Cow::Borrowed(s), Cow::Borrowed)
 }
 
 /// Translate a pattern containing `{0}`, `{1}`... placeholders, then fill them.
@@ -255,11 +248,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn portuguese_is_the_identity() {
-        assert_eq!(tr_in(Lang::PtBr, "Sair"), "Sair");
-    }
-
-    #[test]
     fn english_translates_and_falls_back() {
         assert_eq!(tr_in(Lang::En, "Sair"), "Quit");
         assert_eq!(tr_in(Lang::En, "texto sem tradução"), "texto sem tradução");
@@ -270,14 +258,6 @@ mod tests {
         assert_eq!(
             trf_in(Lang::En, "Conta não encontrada: {0}", &[&"acct-1"]),
             "Account not found: acct-1"
-        );
-        assert_eq!(
-            trf_in(
-                Lang::PtBr,
-                "{0} {1} acima do limite de 500 MB",
-                &[&2, &"arquivos"]
-            ),
-            "2 arquivos acima do limite de 500 MB"
         );
     }
 

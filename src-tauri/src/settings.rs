@@ -495,7 +495,9 @@ mod tests {
     fn flatpak_id_validation_blocks_path_and_desktop_entry_injection() {
         assert!(is_valid_flatpak_id("io.github.jazbloktq.venwhatsapp"));
         assert!(!is_valid_flatpak_id("../../autostart"));
-        assert!(!is_valid_flatpak_id("io.github.jazbloktq.venwhatsapp\nExec=sh"));
+        assert!(!is_valid_flatpak_id(
+            "io.github.jazbloktq.venwhatsapp\nExec=sh"
+        ));
         assert!(!is_valid_flatpak_id("io..Venwhatsapp"));
         assert!(!is_valid_flatpak_id("io.github.505Venwhatsapp"));
     }

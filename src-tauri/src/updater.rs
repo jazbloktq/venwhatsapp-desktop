@@ -2258,7 +2258,9 @@ mod tests {
         let out = apply(&Method::Flatpak, &staged, &c).unwrap();
         assert_eq!(
             out,
-            Outcome::Restart(Relaunch::FlatpakRun("io.github.jazbloktq.venwhatsapp".into()))
+            Outcome::Restart(Relaunch::FlatpakRun(
+                "io.github.jazbloktq.venwhatsapp".into()
+            ))
         );
         let args = std::fs::read_to_string(d.join("args")).unwrap();
         assert_eq!(
@@ -2294,7 +2296,9 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn flatpak_relaunch_runs_on_the_host() {
-        let c = relaunch_command(&Relaunch::FlatpakRun("io.github.jazbloktq.venwhatsapp".into()));
+        let c = relaunch_command(&Relaunch::FlatpakRun(
+            "io.github.jazbloktq.venwhatsapp".into(),
+        ));
         let args: Vec<_> = c
             .get_args()
             .map(|a| a.to_string_lossy().into_owned())
