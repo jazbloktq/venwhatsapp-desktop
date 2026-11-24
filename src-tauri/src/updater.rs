@@ -1,5 +1,5 @@
 //! Update engine: finds the newest GitHub release, downloads the asset that fits
-//! how whatRust was installed, checks it against the release's `SHA256SUMS` and
+//! how Venwhatsapp was installed, checks it against the release's `SHA256SUMS` and
 //! applies it. No Tauri types here, so every path is unit-tested; the scheduling,
 //! notifications, tray item and IPC live in `update_service.rs`.
 //!
@@ -17,7 +17,7 @@
 //!
 //! Nothing is replaced or launched before the download matched the release's
 //! `SHA256SUMS`; a mismatch, a missing entry or a missing `SHA256SUMS` aborts and
-//! leaves the installed copy as it was. `WHATRUST_UPDATE_FEED` points the checker
+//! leaves the installed copy as it was. `VENWHATSAPP_UPDATE_FEED` points the checker
 //! at another release JSON (a URL or a local file whose asset URLs may be local
 //! paths); the tests and the local end-to-end run use it.
 
@@ -29,12 +29,12 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-pub const REPO: &str = "karem505/whatRust";
-pub const FEED_ENV: &str = "WHATRUST_UPDATE_FEED";
+pub const REPO: &str = "jazbloktq/venwhatsapp-desktop";
+pub const FEED_ENV: &str = "VENWHATSAPP_UPDATE_FEED";
 /// Where the Flatpak fallback sends people who cannot use the bundle directly.
 pub const FLATPAK_COMMAND: &str =
-    "curl -fsSL https://raw.githubusercontent.com/karem505/whatRust/master/install-flatpak.sh | sh";
-const ASSET_PREFIX: &str = "https://github.com/karem505/whatRust/releases/download/";
+    "curl -fsSL https://raw.githubusercontent.com/jazbloktq/venwhatsapp-desktop/main/install-flatpak.sh | sh";
+const ASSET_PREFIX: &str = "https://github.com/jazbloktq/venwhatsapp-desktop/releases/download/";
 const NOTES_LIMIT: usize = 60_000;
 
 // ---- errors ---------------------------------------------------------------------------------
@@ -175,7 +175,7 @@ fn is_source_build(path: &str) -> bool {
     })
 }
 
-/// The `.app` directory that contains `exe` (`…/whatRust.app/Contents/MacOS/whatrust`).
+/// The `.app` directory that contains `exe` (`…/Venwhatsapp.app/Contents/MacOS/venwhatsapp`).
 fn mac_bundle(exe: &Path) -> Option<PathBuf> {
     exe.ancestors()
         .find(|a| {
@@ -302,7 +302,7 @@ impl Method {
     pub fn how_to(&self) -> String {
         match self {
             Method::Source => tr("Compilado do código-fonte: atualize o código e compile de novo, ou instale uma versão publicada.").into_owned(),
-            Method::Other => tr("Esta instalação não pode ser atualizada pelo whatRust. Baixe a nova versão na página de lançamentos ou use o gerenciador de pacotes.").into_owned(),
+            Method::Other => tr("Esta instalação não pode ser atualizada pelo Venwhatsapp. Baixe a nova versão na página de lançamentos ou use o gerenciador de pacotes.").into_owned(),
             _ => String::new(),
         }
     }
@@ -399,7 +399,7 @@ pub fn find_asset(release: &Release, kind: AssetKind, arch: Arch) -> Option<&Ass
     };
     release.assets.iter().find(|a| {
         let n = a.name.to_ascii_lowercase();
-        n.starts_with("whatrust") && n.ends_with(suffix) && n.contains(arch_token)
+        n.starts_with("venwhatsapp") && n.ends_with(suffix) && n.contains(arch_token)
     })
 }
 
@@ -465,7 +465,7 @@ impl Net {
     fn agent(&self, body_limit: Duration) -> Res<ureq::Agent> {
         let mut b = ureq::Agent::config_builder()
             .user_agent(format!(
-                "whatRust/{} (+https://github.com/{REPO})",
+                "Venwhatsapp/{} (+https://github.com/{REPO})",
                 env!("CARGO_PKG_VERSION")
             ))
             .timeout_connect(Some(Duration::from_secs(20)))
@@ -621,7 +621,7 @@ pub struct Plan {
 
 /// Is `dir` somewhere we can create files?
 pub fn dir_writable(dir: &Path) -> bool {
-    let probe = dir.join(format!(".whatrust-write-test-{}", std::process::id()));
+    let probe = dir.join(format!(".venwhatsapp-write-test-{}", std::process::id()));
     let ok = std::fs::File::create(&probe).is_ok();
     let _ = std::fs::remove_file(&probe);
     ok
@@ -692,7 +692,8 @@ fn private_dir() -> std::io::Result<PathBuf> {
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_nanos())
         .unwrap_or(0);
-    let dir = std::env::temp_dir().join(format!("whatrust-update-{}-{nanos}", std::process::id()));
+    let dir =
+        std::env::temp_dir().join(format!("venwhatsapp-update-{}-{nanos}", std::process::id()));
     std::fs::DirBuilder::new().mode(0o700).create(&dir)?;
     Ok(dir)
 }
@@ -703,7 +704,8 @@ fn private_dir() -> std::io::Result<PathBuf> {
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_nanos())
         .unwrap_or(0);
-    let dir = std::env::temp_dir().join(format!("whatrust-update-{}-{nanos}", std::process::id()));
+    let dir =
+        std::env::temp_dir().join(format!("venwhatsapp-update-{}-{nanos}", std::process::id()));
     std::fs::create_dir(&dir)?;
     Ok(dir)
 }
@@ -717,7 +719,7 @@ pub fn clean_stale() {
         let stale = e
             .file_name()
             .to_string_lossy()
-            .starts_with("whatrust-update-")
+            .starts_with("venwhatsapp-update-")
             && e.metadata()
                 .and_then(|m| m.modified())
                 .ok()
@@ -741,13 +743,13 @@ pub fn fetch(
     if !asset_url_ok(&plan.asset.url, overridden) {
         return Err(err(
             Kind::Unsupported,
-            tr("O endereço do arquivo não pertence às versões oficiais do whatRust."),
+            tr("O endereço do arquivo não pertence às versões oficiais do Venwhatsapp."),
         ));
     }
     // Ask for the checksum first: a release that cannot be verified is not downloaded at all.
     let want = expected_checksum(net, release, &plan.asset.name)?;
     let (dir, part, final_path, cleanup) = match &plan.dest {
-        Dest::Beside(d) => (d.clone(), d.join(".whatrust-update.part"), None, None),
+        Dest::Beside(d) => (d.clone(), d.join(".venwhatsapp-update.part"), None, None),
         Dest::Downloads(d) => (
             d.clone(),
             d.join(format!(".{}.part", plan.asset.name)),
@@ -861,7 +863,7 @@ impl ApplyCtx {
             flatpak_id: std::env::var("FLATPAK_ID")
                 .ok()
                 .filter(|v| !v.is_empty())
-                .unwrap_or_else(|| "io.github.karem505.whatRust".into()),
+                .unwrap_or_else(|| "io.github.jazbloktq.venwhatsapp".into()),
         }
     }
 }
@@ -890,7 +892,7 @@ fn swap_bundle(new_app: &Path, bundle: &Path) -> Res<()> {
     let parent = bundle
         .parent()
         .ok_or_else(|| err(Kind::Io, tr("Caminho do aplicativo inválido.")))?;
-    let old = parent.join(format!(".whatrust-old-{}.app", std::process::id()));
+    let old = parent.join(format!(".venwhatsapp-old-{}.app", std::process::id()));
     let _ = std::fs::remove_dir_all(&old);
     std::fs::rename(bundle, &old).map_err(|e| {
         err(
@@ -927,7 +929,7 @@ fn apply_mac_tar(staged: &Staged, bundle: &Path) -> Res<Outcome> {
     let parent = bundle
         .parent()
         .ok_or_else(|| err(Kind::Io, tr("Caminho do aplicativo inválido.")))?;
-    let work = parent.join(format!(".whatrust-update-{}", std::process::id()));
+    let work = parent.join(format!(".venwhatsapp-update-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&work);
     std::fs::create_dir_all(&work)
         .map_err(|e| err(Kind::Io, format!("{}: {e}", work.display())))?;
@@ -993,7 +995,7 @@ pub fn flatpak_scope(info: &str) -> Option<&'static str> {
 
 /// Install a verified Flatpak bundle on the host. Before v0.6.16 the bundle
 /// was only opened in the software centre, and some (Shelly, for one) showed
-/// it without installing it, while whatRust reported the update as done.
+/// it without installing it, while Venwhatsapp reported the update as done.
 /// Needs `--talk-name=org.freedesktop.Flatpak` (flatpak-spawn --host). When the
 /// command can't run at all, the bundle is opened as before; when it runs and
 /// fails, the bundle stays in Downloads with the command to install it.
@@ -1206,8 +1208,8 @@ mod tests {
 
     fn release_json(tag: &str, assets: &[(&str, &str)]) -> Value {
         json!({
-            "tag_name": tag, "name": format!("whatRust {tag}"), "body": "**Fixes**\n- one",
-            "html_url": "https://github.com/karem505/whatRust/releases/tag/x",
+            "tag_name": tag, "name": format!("Venwhatsapp {tag}"), "body": "**Fixes**\n- one",
+            "html_url": "https://github.com/jazbloktq/venwhatsapp-desktop/releases/tag/x",
             "published_at": "2026-10-17T10:00:00Z",
             "assets": assets.iter().map(|(n, u)| json!({"name": n, "browser_download_url": u, "size": 0})).collect::<Vec<_>>()
         })
@@ -1216,14 +1218,14 @@ mod tests {
     /// The asset names of a real release (v0.6.10), for one version.
     fn real_assets(v: &str) -> Vec<(String, String)> {
         [
-            format!("whatRust_{v}_x64-setup.exe"),
-            format!("whatRust_{v}_x64_en-US.msi"),
-            format!("whatRust_{v}_aarch64.dmg"),
-            "whatRust_aarch64.app.tar.gz".to_string(),
-            format!("whatRust_{v}_amd64.deb"),
-            format!("whatRust_{v}_amd64.AppImage"),
-            "whatRust_x86_64.flatpak".to_string(),
-            "whatRust_aarch64.flatpak".to_string(),
+            format!("Venwhatsapp_{v}_x64-setup.exe"),
+            format!("Venwhatsapp_{v}_x64_en-US.msi"),
+            format!("Venwhatsapp_{v}_aarch64.dmg"),
+            "Venwhatsapp_aarch64.app.tar.gz".to_string(),
+            format!("Venwhatsapp_{v}_amd64.deb"),
+            format!("Venwhatsapp_{v}_amd64.AppImage"),
+            "Venwhatsapp_x86_64.flatpak".to_string(),
+            "Venwhatsapp_aarch64.flatpak".to_string(),
             "SHA256SUMS".to_string(),
         ]
         .into_iter()
@@ -1293,35 +1295,35 @@ mod tests {
         let pick = |k, a| find_asset(&r, k, a).map(|x| x.name.as_str());
         assert_eq!(
             pick(AssetKind::AppImage, Arch::X64),
-            Some("whatRust_1.2.3_amd64.AppImage")
+            Some("Venwhatsapp_1.2.3_amd64.AppImage")
         );
         assert_eq!(
             pick(AssetKind::Deb, Arch::X64),
-            Some("whatRust_1.2.3_amd64.deb")
+            Some("Venwhatsapp_1.2.3_amd64.deb")
         );
         assert_eq!(
             pick(AssetKind::Nsis, Arch::X64),
-            Some("whatRust_1.2.3_x64-setup.exe")
+            Some("Venwhatsapp_1.2.3_x64-setup.exe")
         );
         assert_eq!(
             pick(AssetKind::Msi, Arch::X64),
-            Some("whatRust_1.2.3_x64_en-US.msi")
+            Some("Venwhatsapp_1.2.3_x64_en-US.msi")
         );
         assert_eq!(
             pick(AssetKind::MacTar, Arch::Arm64),
-            Some("whatRust_aarch64.app.tar.gz")
+            Some("Venwhatsapp_aarch64.app.tar.gz")
         );
         assert_eq!(
             pick(AssetKind::MacDmg, Arch::Arm64),
-            Some("whatRust_1.2.3_aarch64.dmg")
+            Some("Venwhatsapp_1.2.3_aarch64.dmg")
         );
         assert_eq!(
             pick(AssetKind::Flatpak, Arch::X64),
-            Some("whatRust_x86_64.flatpak")
+            Some("Venwhatsapp_x86_64.flatpak")
         );
         assert_eq!(
             pick(AssetKind::Flatpak, Arch::Arm64),
-            Some("whatRust_aarch64.flatpak")
+            Some("Venwhatsapp_aarch64.flatpak")
         );
         // there is no build for these combinations: never fall back to another arch
         assert_eq!(pick(AssetKind::AppImage, Arch::Arm64), None);
@@ -1347,14 +1349,14 @@ mod tests {
         r.assets.insert(
             0,
             Asset {
-                name: "whatRust_1.2.3_amd64.deb.sig".into(),
+                name: "Venwhatsapp_1.2.3_amd64.deb.sig".into(),
                 url: "u".into(),
                 size: 0,
             },
         );
         assert_eq!(
             find_asset(&r, AssetKind::Deb, Arch::X64).unwrap().name,
-            "whatRust_1.2.3_amd64.deb"
+            "Venwhatsapp_1.2.3_amd64.deb"
         );
     }
 
@@ -1363,20 +1365,20 @@ mod tests {
         let a = "a".repeat(64);
         let b = "B".repeat(64);
         let sums = format!(
-            "{a}  whatRust_1.0.0_amd64.AppImage\n{b} *whatRust_x86_64.flatpak\nnot-a-hash  junk\n"
+            "{a}  Venwhatsapp_1.0.0_amd64.AppImage\n{b} *Venwhatsapp_x86_64.flatpak\nnot-a-hash  junk\n"
         );
         assert_eq!(
-            checksum_for(&sums, "whatRust_1.0.0_amd64.AppImage").as_deref(),
+            checksum_for(&sums, "Venwhatsapp_1.0.0_amd64.AppImage").as_deref(),
             Some(a.as_str())
         );
         assert_eq!(
-            checksum_for(&sums, "whatRust_x86_64.flatpak"),
+            checksum_for(&sums, "Venwhatsapp_x86_64.flatpak"),
             Some(b.to_lowercase())
         );
-        assert_eq!(checksum_for(&sums, "whatRust_1.0.0_amd64.deb"), None);
+        assert_eq!(checksum_for(&sums, "Venwhatsapp_1.0.0_amd64.deb"), None);
         assert_eq!(checksum_for(&sums, "junk"), None);
         // a prefix of a name is not a match
-        assert_eq!(checksum_for(&sums, "whatRust_1.0.0_amd64"), None);
+        assert_eq!(checksum_for(&sums, "Venwhatsapp_1.0.0_amd64"), None);
     }
 
     #[test]
@@ -1405,35 +1407,35 @@ mod tests {
     #[test]
     fn install_types_are_recognised() {
         let d = tempdir("detect");
-        let img = d.join("whatRust.AppImage");
+        let img = d.join("Venwhatsapp.AppImage");
         std::fs::write(&img, b"x").unwrap();
 
-        let mut e = env(Os::Linux, "/tmp/.mount_abc/usr/bin/whatrust");
+        let mut e = env(Os::Linux, "/tmp/.mount_abc/usr/bin/venwhatsapp");
         e.appimage = Some(img.clone());
         assert_eq!(detect(&e), Method::AppImage(img.clone()));
         // $APPIMAGE pointing at nothing is not trusted
         e.appimage = Some(d.join("missing.AppImage"));
         assert_eq!(detect(&e), Method::Other);
         // Flatpak wins over everything
-        let mut e = env(Os::Linux, "/app/bin/whatrust");
+        let mut e = env(Os::Linux, "/app/bin/venwhatsapp");
         e.flatpak = true;
         assert_eq!(detect(&e), Method::Flatpak);
         // .deb: under /usr with dpkg; otherwise a package we cannot drive
-        let mut e = env(Os::Linux, "/usr/bin/whatrust");
+        let mut e = env(Os::Linux, "/usr/bin/venwhatsapp");
         e.has_dpkg = true;
         assert_eq!(detect(&e), Method::Deb);
         e.has_dpkg = false;
         assert_eq!(detect(&e), Method::Other);
         // source builds
         for p in [
-            "/home/u/whatRust/src-tauri/target/debug/whatrust",
-            "/home/u/whatRust/src-tauri/target/release/whatrust",
-            "/home/u/.cache/t/target/x86_64-unknown-linux-gnu/release/whatrust",
+            "/home/u/Venwhatsapp/src-tauri/target/debug/venwhatsapp",
+            "/home/u/Venwhatsapp/src-tauri/target/release/venwhatsapp",
+            "/home/u/.cache/t/target/x86_64-unknown-linux-gnu/release/venwhatsapp",
         ] {
             assert_eq!(detect(&env(Os::Linux, p)), Method::Source, "{p}");
         }
         assert_eq!(
-            detect(&env(Os::Linux, "/home/u/target-practice/bin/whatrust")),
+            detect(&env(Os::Linux, "/home/u/target-practice/bin/venwhatsapp")),
             Method::Other
         );
     }
@@ -1441,26 +1443,29 @@ mod tests {
     #[test]
     fn windows_installs_are_told_apart() {
         let d = tempdir("detect-win");
-        let nsis_dir = d.join("whatRust");
+        let nsis_dir = d.join("Venwhatsapp");
         std::fs::create_dir_all(&nsis_dir).unwrap();
         std::fs::write(nsis_dir.join("uninstall.exe"), b"x").unwrap();
-        let exe = nsis_dir.join("whatrust.exe");
+        let exe = nsis_dir.join("venwhatsapp.exe");
         assert_eq!(
             detect(&env(Os::Windows, &exe.to_string_lossy())),
             Method::WindowsNsis
         );
         assert_eq!(
-            detect(&env(Os::Windows, r"C:\Program Files\whatRust\whatrust.exe")),
+            detect(&env(
+                Os::Windows,
+                r"C:\Program Files\Venwhatsapp\venwhatsapp.exe"
+            )),
             Method::WindowsMsi
         );
         assert_eq!(
-            detect(&env(Os::Windows, r"C:\Users\me\Downloads\whatrust.exe")),
+            detect(&env(Os::Windows, r"C:\Users\me\Downloads\venwhatsapp.exe")),
             Method::Other
         );
         assert_eq!(
             detect(&env(
                 Os::Windows,
-                r"C:\src\whatRust\src-tauri\target\debug\whatrust.exe"
+                r"C:\src\Venwhatsapp\src-tauri\target\debug\venwhatsapp.exe"
             )),
             Method::Source
         );
@@ -1471,26 +1476,26 @@ mod tests {
         assert_eq!(
             detect(&env(
                 Os::Macos,
-                "/Applications/whatRust.app/Contents/MacOS/whatrust"
+                "/Applications/Venwhatsapp.app/Contents/MacOS/venwhatsapp"
             )),
-            Method::MacApp("/Applications/whatRust.app".into())
+            Method::MacApp("/Applications/Venwhatsapp.app".into())
         );
         assert_eq!(
             detect(&env(
                 Os::Macos,
-                "/Users/me/Apps/My.app/Contents/MacOS/whatrust"
+                "/Users/me/Apps/My.app/Contents/MacOS/venwhatsapp"
             )),
             Method::MacApp("/Users/me/Apps/My.app".into())
         );
         assert_eq!(
             detect(&env(
                 Os::Macos,
-                "/Users/me/whatRust/src-tauri/target/debug/whatrust"
+                "/Users/me/Venwhatsapp/src-tauri/target/debug/venwhatsapp"
             )),
             Method::Source
         );
         assert_eq!(
-            detect(&env(Os::Macos, "/usr/local/bin/whatrust")),
+            detect(&env(Os::Macos, "/usr/local/bin/venwhatsapp")),
             Method::Other
         );
     }
@@ -1530,7 +1535,7 @@ mod tests {
         let img = d.join("w.AppImage");
         let p = plan(&Method::AppImage(img.clone()), &r, Arch::X64, &dl).unwrap();
         assert_eq!(p.dest, Dest::Beside(d.clone()));
-        assert_eq!(p.asset.name, "whatRust_1.2.3_amd64.AppImage");
+        assert_eq!(p.asset.name, "Venwhatsapp_1.2.3_amd64.AppImage");
         assert_eq!(
             plan(&Method::Deb, &r, Arch::X64, &dl).unwrap().dest,
             Dest::Private
@@ -1544,14 +1549,14 @@ mod tests {
             Dest::Private
         );
         // writable bundle: tarball swap; unwritable: the disk image goes to Downloads
-        let bundle = d.join("whatRust.app");
+        let bundle = d.join("Venwhatsapp.app");
         let p = plan(&Method::MacApp(bundle), &r, Arch::Arm64, &dl).unwrap();
         assert_eq!(
             (p.kind, p.dest),
             (AssetKind::MacTar, Dest::Beside(d.clone()))
         );
         let p = plan(
-            &Method::MacApp("/nonexistent-dir/whatRust.app".into()),
+            &Method::MacApp("/nonexistent-dir/Venwhatsapp.app".into()),
             &r,
             Arch::Arm64,
             &dl,
@@ -1590,7 +1595,7 @@ mod tests {
             release_json(
                 "v9.9.9",
                 &[
-                    ("whatRust_9.9.9_amd64.AppImage", "/local/path"),
+                    ("Venwhatsapp_9.9.9_amd64.AppImage", "/local/path"),
                     ("SHA256SUMS", "/local/sums"),
                 ],
             )
@@ -1606,7 +1611,7 @@ mod tests {
         let rel = rel.unwrap();
         assert_eq!(rel.version, Version::new(9, 9, 9));
         assert_eq!(
-            rel.asset("whatRust_9.9.9_amd64.AppImage").unwrap().url,
+            rel.asset("Venwhatsapp_9.9.9_amd64.AppImage").unwrap().url,
             "/local/path"
         );
         // without the override the real GitHub endpoint is used
@@ -1614,7 +1619,7 @@ mod tests {
         assert!(!overridden);
         assert_eq!(
             url,
-            "https://api.github.com/repos/karem505/whatRust/releases/latest"
+            "https://api.github.com/repos/jazbloktq/venwhatsapp-desktop/releases/latest"
         );
     }
 
@@ -1631,11 +1636,11 @@ mod tests {
     fn appimage_fixture(tag: &str, new_bytes: &[u8]) -> Fixture {
         let _ = tag;
         let dir = tempdir(tag);
-        let target = dir.join("whatRust.AppImage");
+        let target = dir.join("Venwhatsapp.AppImage");
         std::fs::write(&target, b"old").unwrap();
         let new = dir.join("dl-new.AppImage");
         std::fs::write(&new, new_bytes).unwrap();
-        let name = "whatRust_9.0.0_amd64.AppImage".to_string();
+        let name = "Venwhatsapp_9.0.0_amd64.AppImage".to_string();
         let sums = dir.join("SHA256SUMS");
         let release = parse_release(&release_json(
             "v9.0.0",
@@ -1659,12 +1664,12 @@ mod tests {
             pkexec: "pkexec".into(),
             msiexec: "msiexec".into(),
             downloads: dir.join("Downloads"),
-            exe: dir.join("whatrust"),
+            exe: dir.join("venwhatsapp"),
             // A program that does not exist: the Flatpak path falls back to
             // opening the bundle unless a test provides a fake one.
             flatpak_spawn: dir.join("no-flatpak-spawn").display().to_string(),
             flatpak_info: dir.join("flatpak-info"),
-            flatpak_id: "io.github.karem505.whatRust".into(),
+            flatpak_id: "io.github.jazbloktq.venwhatsapp".into(),
         }
     }
 
@@ -1673,7 +1678,7 @@ mod tests {
             .unwrap()
             .flatten()
             .map(|e| e.file_name().to_string_lossy().into_owned())
-            .filter(|n| n.starts_with(".whatrust"))
+            .filter(|n| n.starts_with(".venwhatsapp"))
             .collect()
     }
 
@@ -1817,7 +1822,7 @@ mod tests {
         let _g = env_lock();
         std::env::set_var(FEED_ENV, "/x");
         let d = tempdir("private");
-        let name = "whatRust_9.0.1_x64-setup.exe";
+        let name = "Venwhatsapp_9.0.1_x64-setup.exe";
         let setup = d.join("src-setup.exe");
         std::fs::write(&setup, b"installer").unwrap();
         let sums = d.join("SHA256SUMS");
@@ -1847,7 +1852,7 @@ mod tests {
             .filter(|e| {
                 e.file_name()
                     .to_string_lossy()
-                    .starts_with("whatrust-update-")
+                    .starts_with("venwhatsapp-update-")
             })
             .filter(|e| e.path().join(name).exists())
             .collect();
@@ -1903,7 +1908,7 @@ mod tests {
         let log = d0.join("args.txt");
         let (d, staged) = staged_installer(
             "nsis",
-            "whatRust_9.0.0_x64-setup.exe",
+            "Venwhatsapp_9.0.0_x64-setup.exe",
             AssetKind::Nsis,
             &format!("echo \"$@\" > {}", log.display()),
         );
@@ -1931,7 +1936,7 @@ mod tests {
     fn an_installer_that_cannot_start_is_an_error_not_a_quit() {
         let (d, staged) = staged_installer(
             "nsis-bad",
-            "whatRust_9.0.0_x64-setup.exe",
+            "Venwhatsapp_9.0.0_x64-setup.exe",
             AssetKind::Nsis,
             "exit 0",
         );
@@ -1943,7 +1948,7 @@ mod tests {
         // MSI: msiexec missing
         let (d, staged) = staged_installer(
             "msi-bad",
-            "whatRust_9.0.0_x64_en-US.msi",
+            "Venwhatsapp_9.0.0_x64_en-US.msi",
             AssetKind::Msi,
             "exit 0",
         );
@@ -1960,7 +1965,7 @@ mod tests {
     fn msiexec_gets_the_passive_arguments() {
         let (d, staged) = staged_installer(
             "msi",
-            "whatRust_9.0.0_x64_en-US.msi",
+            "Venwhatsapp_9.0.0_x64_en-US.msi",
             AssetKind::Msi,
             "exit 0",
         );
@@ -1993,8 +1998,12 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn a_deb_is_installed_through_pkexec_dpkg_and_cleaned_up() {
-        let (d, staged) =
-            staged_installer("deb", "whatRust_9.0.0_amd64.deb", AssetKind::Deb, "exit 0");
+        let (d, staged) = staged_installer(
+            "deb",
+            "Venwhatsapp_9.0.0_amd64.deb",
+            AssetKind::Deb,
+            "exit 0",
+        );
         let log = d.join("deb-args.txt");
         let fake = d.join("fake-pkexec");
         script(&fake, &format!("echo \"$@\" > {}", log.display()));
@@ -2014,7 +2023,7 @@ mod tests {
         // cancelled prompt: nothing installed, file removed
         let (d, staged) = staged_installer(
             "deb-cancel",
-            "whatRust_9.0.0_amd64.deb",
+            "Venwhatsapp_9.0.0_amd64.deb",
             AssetKind::Deb,
             "exit 0",
         );
@@ -2031,7 +2040,7 @@ mod tests {
         // dpkg failure
         let (d, staged) = staged_installer(
             "deb-fail",
-            "whatRust_9.0.0_amd64.deb",
+            "Venwhatsapp_9.0.0_amd64.deb",
             AssetKind::Deb,
             "exit 0",
         );
@@ -2050,7 +2059,7 @@ mod tests {
     fn without_pkexec_the_verified_deb_is_kept_for_the_user() {
         let (d, staged) = staged_installer(
             "deb-nopk",
-            "whatRust_9.0.0_amd64.deb",
+            "Venwhatsapp_9.0.0_amd64.deb",
             AssetKind::Deb,
             "exit 0",
         );
@@ -2058,7 +2067,7 @@ mod tests {
         c.pkexec = "/nonexistent/pkexec".into();
         match apply(&Method::Deb, &staged, &c).unwrap() {
             Outcome::Manual { path, message } => {
-                assert_eq!(path, c.downloads.join("whatRust_9.0.0_amd64.deb"));
+                assert_eq!(path, c.downloads.join("Venwhatsapp_9.0.0_amd64.deb"));
                 assert!(path.is_file());
                 assert!(message.contains("dpkg -i"), "{message}");
             }
@@ -2070,28 +2079,28 @@ mod tests {
 
     #[cfg(unix)]
     fn fake_app(root: &Path, marker: &str) -> PathBuf {
-        let app = root.join("whatRust.app");
+        let app = root.join("Venwhatsapp.app");
         std::fs::create_dir_all(app.join("Contents/MacOS")).unwrap();
         std::fs::write(app.join("Contents/Info.plist"), b"<plist/>").unwrap();
-        std::fs::write(app.join("Contents/MacOS/whatrust"), marker).unwrap();
+        std::fs::write(app.join("Contents/MacOS/venwhatsapp"), marker).unwrap();
         app
     }
 
     #[cfg(unix)]
     fn mac_staged(d: &Path, tar_args_root: &Path) -> Staged {
-        let tgz = d.join("whatRust_aarch64.app.tar.gz");
+        let tgz = d.join("Venwhatsapp_aarch64.app.tar.gz");
         let st = std::process::Command::new("tar")
             .arg("-czf")
             .arg(&tgz)
             .arg("-C")
             .arg(tar_args_root)
-            .arg("whatRust.app")
+            .arg("Venwhatsapp.app")
             .status()
             .unwrap();
         assert!(st.success());
         Staged {
             path: tgz,
-            name: "whatRust_aarch64.app.tar.gz".into(),
+            name: "Venwhatsapp_aarch64.app.tar.gz".into(),
             kind: AssetKind::MacTar,
             cleanup: None,
         }
@@ -2111,7 +2120,7 @@ mod tests {
         let out = apply(&Method::MacApp(bundle.clone()), &staged, &ctx(&d)).unwrap();
         assert_eq!(out, Outcome::Restart(Relaunch::MacOpen(bundle.clone())));
         assert_eq!(
-            std::fs::read(bundle.join("Contents/MacOS/whatrust")).unwrap(),
+            std::fs::read(bundle.join("Contents/MacOS/venwhatsapp")).unwrap(),
             b"new"
         );
         let names: Vec<String> = std::fs::read_dir(&apps)
@@ -2121,7 +2130,7 @@ mod tests {
             .collect();
         assert_eq!(
             names,
-            vec!["whatRust.app"],
+            vec!["Venwhatsapp.app"],
             "no old bundle or work folder left: {names:?}"
         );
         assert!(!staged.path.exists());
@@ -2136,14 +2145,14 @@ mod tests {
         let bundle = fake_app(&apps, "old");
         // an archive whose app has no Info.plist
         let src = d.join("src");
-        let broken = src.join("whatRust.app/Contents/MacOS");
+        let broken = src.join("Venwhatsapp.app/Contents/MacOS");
         std::fs::create_dir_all(&broken).unwrap();
-        std::fs::write(broken.join("whatrust"), "new").unwrap();
+        std::fs::write(broken.join("venwhatsapp"), "new").unwrap();
         let staged = mac_staged(&d, &src);
         let e = apply(&Method::MacApp(bundle.clone()), &staged, &ctx(&d)).unwrap_err();
         assert_eq!(e.kind, Kind::Install);
         assert_eq!(
-            std::fs::read(bundle.join("Contents/MacOS/whatrust")).unwrap(),
+            std::fs::read(bundle.join("Contents/MacOS/venwhatsapp")).unwrap(),
             b"old"
         );
         // not an archive at all
@@ -2159,7 +2168,7 @@ mod tests {
             Kind::Install
         );
         assert_eq!(
-            std::fs::read(bundle.join("Contents/MacOS/whatrust")).unwrap(),
+            std::fs::read(bundle.join("Contents/MacOS/venwhatsapp")).unwrap(),
             b"old"
         );
         let names: Vec<String> = std::fs::read_dir(&apps)
@@ -2167,7 +2176,7 @@ mod tests {
             .flatten()
             .map(|e| e.file_name().to_string_lossy().into_owned())
             .collect();
-        assert_eq!(names, vec!["whatRust.app"], "{names:?}");
+        assert_eq!(names, vec!["Venwhatsapp.app"], "{names:?}");
     }
 
     #[cfg(unix)]
@@ -2179,7 +2188,7 @@ mod tests {
         let e = swap_bundle(&d.join("missing.app"), &bundle).unwrap_err();
         assert_eq!(e.kind, Kind::Install);
         assert_eq!(
-            std::fs::read(bundle.join("Contents/MacOS/whatrust")).unwrap(),
+            std::fs::read(bundle.join("Contents/MacOS/venwhatsapp")).unwrap(),
             b"old"
         );
     }
@@ -2187,21 +2196,21 @@ mod tests {
     #[test]
     fn flatpak_and_dmg_downloads_are_handed_back_to_be_opened() {
         let staged = Staged {
-            path: "/dl/whatRust_x86_64.flatpak".into(),
+            path: "/dl/Venwhatsapp_x86_64.flatpak".into(),
             name: "n".into(),
             kind: AssetKind::Flatpak,
             cleanup: None,
         };
         assert_eq!(
             apply(&Method::Flatpak, &staged, &ctx(Path::new("/tmp"))).unwrap(),
-            Outcome::OpenFile("/dl/whatRust_x86_64.flatpak".into())
+            Outcome::OpenFile("/dl/Venwhatsapp_x86_64.flatpak".into())
         );
     }
 
     #[test]
     fn flatpak_scope_follows_the_installation() {
-        let user = "[Instance]\napp-path=/home/u/.local/share/flatpak/app/io.github.karem505.whatRust/x86_64/stable/abc/files\n";
-        let system = "[Instance]\napp-path=/var/lib/flatpak/app/io.github.karem505.whatRust/x86_64/stable/abc/files\n";
+        let user = "[Instance]\napp-path=/home/u/.local/share/flatpak/app/io.github.jazbloktq.venwhatsapp/x86_64/stable/abc/files\n";
+        let system = "[Instance]\napp-path=/var/lib/flatpak/app/io.github.jazbloktq.venwhatsapp/x86_64/stable/abc/files\n";
         assert_eq!(flatpak_scope(user), Some("--user"));
         assert_eq!(flatpak_scope(system), Some("--system"));
         assert_eq!(
@@ -2241,15 +2250,15 @@ mod tests {
         let d = tempdir("flatpak-host-ok");
         let c = fake_flatpak(&d, 0);
         let staged = Staged {
-            path: d.join("whatRust_x86_64.flatpak"),
-            name: "whatRust_x86_64.flatpak".into(),
+            path: d.join("Venwhatsapp_x86_64.flatpak"),
+            name: "Venwhatsapp_x86_64.flatpak".into(),
             kind: AssetKind::Flatpak,
             cleanup: None,
         };
         let out = apply(&Method::Flatpak, &staged, &c).unwrap();
         assert_eq!(
             out,
-            Outcome::Restart(Relaunch::FlatpakRun("io.github.karem505.whatRust".into()))
+            Outcome::Restart(Relaunch::FlatpakRun("io.github.jazbloktq.venwhatsapp".into()))
         );
         let args = std::fs::read_to_string(d.join("args")).unwrap();
         assert_eq!(
@@ -2267,8 +2276,8 @@ mod tests {
         let d = tempdir("flatpak-host-fail");
         let c = fake_flatpak(&d, 1);
         let staged = Staged {
-            path: d.join("whatRust_x86_64.flatpak"),
-            name: "whatRust_x86_64.flatpak".into(),
+            path: d.join("Venwhatsapp_x86_64.flatpak"),
+            name: "Venwhatsapp_x86_64.flatpak".into(),
             kind: AssetKind::Flatpak,
             cleanup: None,
         };
@@ -2285,7 +2294,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn flatpak_relaunch_runs_on_the_host() {
-        let c = relaunch_command(&Relaunch::FlatpakRun("io.github.karem505.whatRust".into()));
+        let c = relaunch_command(&Relaunch::FlatpakRun("io.github.jazbloktq.venwhatsapp".into()));
         let args: Vec<_> = c
             .get_args()
             .map(|a| a.to_string_lossy().into_owned())
@@ -2298,7 +2307,7 @@ mod tests {
                 "sh",
                 "-c",
                 "sleep 2; exec flatpak run \"$0\"",
-                "io.github.karem505.whatRust"
+                "io.github.jazbloktq.venwhatsapp"
             ]
         );
     }
@@ -2312,7 +2321,7 @@ mod tests {
         let src = d.join("src.flatpak");
         std::fs::write(&src, b"bundle").unwrap();
         let sums = d.join("SHA256SUMS");
-        let name = "whatRust_x86_64.flatpak";
+        let name = "Venwhatsapp_x86_64.flatpak";
         std::fs::write(&sums, format!("{}  {name}\n", sha(b"bundle"))).unwrap();
         let rel = parse_release(&release_json(
             "v9.0.0",
@@ -2357,7 +2366,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn relaunch_waits_for_the_single_instance_socket() {
-        let c = relaunch_command(&Relaunch::Exec("/x/whatRust.AppImage".into()));
+        let c = relaunch_command(&Relaunch::Exec("/x/Venwhatsapp.AppImage".into()));
         let args: Vec<_> = c
             .get_args()
             .map(|a| a.to_string_lossy().into_owned())
@@ -2365,9 +2374,9 @@ mod tests {
         assert_eq!(c.get_program(), "sh");
         assert_eq!(
             args,
-            vec!["-c", "sleep 1; exec \"$0\"", "/x/whatRust.AppImage"]
+            vec!["-c", "sleep 1; exec \"$0\"", "/x/Venwhatsapp.AppImage"]
         );
-        let c = relaunch_command(&Relaunch::MacOpen("/Applications/whatRust.app".into()));
+        let c = relaunch_command(&Relaunch::MacOpen("/Applications/Venwhatsapp.app".into()));
         let args: Vec<_> = c
             .get_args()
             .map(|a| a.to_string_lossy().into_owned())
@@ -2491,7 +2500,7 @@ mod tests {
             inner.starts_with("get /repos/x/releases/latest "),
             "{inner}"
         );
-        assert!(inner.contains("user-agent: whatrust/"), "{inner}");
+        assert!(inner.contains("user-agent: venwhatsapp/"), "{inner}");
         assert!(
             inner.contains("accept: application/vnd.github+json"),
             "{inner}"
@@ -2505,7 +2514,7 @@ mod tests {
         let (port, rx) = fake_http_proxy("", false);
         std::env::set_var(
             FEED_ENV,
-            "https://api.github.com/repos/karem505/whatRust/releases/latest",
+            "https://api.github.com/repos/jazbloktq/venwhatsapp-desktop/releases/latest",
         );
         let net = Net {
             proxy: Some(format!("http://127.0.0.1:{port}")),
@@ -2537,7 +2546,7 @@ mod tests {
         std::env::set_var(FEED_ENV, feed_file);
         let rel = fetch_latest(&Net::default()).unwrap();
         let d = tempdir("e2e");
-        let target = d.join("whatRust.AppImage");
+        let target = d.join("Venwhatsapp.AppImage");
         std::fs::write(&target, b"old").unwrap();
         let t = std::time::Instant::now();
         let mut last = 0;

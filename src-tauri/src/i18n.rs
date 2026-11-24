@@ -1,107 +1,44 @@
-//! User-interface language. Portuguese (Brazil) is the source language: every
-//! user-visible string in the code is written in Portuguese, and `tr` looks the
-//! text up in the English table when English is selected. A string with no
-//! English entry is shown as written, so a missing translation can never blank
-//! the UI (and `every_literal_has_an_english_entry` fails the build of tests).
-//!
-//! The language lives in `settings.json` (`language`); `set` mirrors it into a
-//! process-wide atomic so lookups never touch the disk.
+//! English-only user-interface translations. The desktop shell's Portuguese
+//! source strings are mapped to English here. Unmapped text remains visible so
+//! a missing entry cannot blank the interface.
 
 use std::borrow::Cow;
-use std::sync::atomic::{AtomicU8, Ordering};
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Lang {
     PtBr,
     En,
 }
 
-pub const PT_BR: &str = "pt-BR";
 pub const EN: &str = "en";
 
 impl Lang {
-    /// `pt`, `pt-BR`, `pt_PT.UTF-8`... mean Portuguese; anything else,
-    /// including an empty or unknown code, means English.
-    pub fn from_code(code: &str) -> Lang {
-        let code = code.trim().to_ascii_lowercase();
-        if code == "pt" || code.starts_with("pt-") || code.starts_with("pt_") {
-            Lang::PtBr
-        } else {
-            Lang::En
-        }
+    /// Venwhatsapp currently ships with English only.
+    pub fn from_code(_code: &str) -> Lang {
+        Lang::En
     }
 
     pub fn code(self) -> &'static str {
         match self {
-            Lang::PtBr => PT_BR,
+            Lang::PtBr => EN,
             Lang::En => EN,
         }
     }
 }
 
 /// Normalise any stored value to one of the supported codes.
-pub fn sanitize_code(code: &str) -> String {
-    Lang::from_code(code).code().to_string()
+pub fn sanitize_code(_code: &str) -> String {
+    EN.to_string()
 }
 
-/// Default for a fresh install or a settings.json written before the language
-/// setting existed: Portuguese when the operating system is set to Portuguese,
-/// English otherwise. Existing users keep the language they had (English).
+/// English is the only supported interface language.
 pub fn system_default() -> &'static str {
-    Lang::from_code(&os_locale()).code()
+    EN
 }
 
-#[cfg(windows)]
-fn os_locale() -> String {
-    use windows::Win32::Globalization::GetUserDefaultLocaleName;
-    // LOCALE_NAME_MAX_LENGTH
-    let mut buf = [0u16; 85];
-    let n = unsafe { GetUserDefaultLocaleName(&mut buf) };
-    if n > 1 {
-        String::from_utf16_lossy(&buf[..(n as usize - 1)])
-    } else {
-        String::new()
-    }
-}
-
-#[cfg(target_os = "macos")]
-fn os_locale() -> String {
-    // Apps started from Finder or the Dock get no LANG; ask the user defaults.
-    std::process::Command::new("defaults")
-        .args(["read", "-g", "AppleLocale"])
-        .output()
-        .ok()
-        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-        .filter(|s| !s.is_empty())
-        .unwrap_or_else(env_locale)
-}
-
-#[cfg(not(any(windows, target_os = "macos")))]
-fn os_locale() -> String {
-    env_locale()
-}
-
-#[cfg(not(windows))]
-fn env_locale() -> String {
-    ["LC_ALL", "LC_MESSAGES", "LANG"]
-        .iter()
-        .filter_map(|k| std::env::var(k).ok())
-        .find(|v| !v.is_empty() && v != "C" && v != "POSIX")
-        .unwrap_or_default()
-}
-
-static CURRENT: AtomicU8 = AtomicU8::new(0);
-
-pub fn set(lang: Lang) {
-    CURRENT.store(lang as u8, Ordering::Relaxed);
-}
+pub fn set(_lang: Lang) {}
 
 pub fn current() -> Lang {
-    if CURRENT.load(Ordering::Relaxed) == Lang::En as u8 {
-        Lang::En
-    } else {
-        Lang::PtBr
-    }
+    Lang::En
 }
 
 fn english(s: &str) -> Option<&'static str> {
@@ -141,7 +78,7 @@ pub fn refresh(app: &tauri::AppHandle) {
         let _ = wv.eval(switch_script());
     }
     if let Some(w) = app.get_webview_window("settings") {
-        let _ = w.set_title(&tr("whatRust — Configurações"));
+        let _ = w.set_title(&tr("Venwhatsapp — Configurações"));
     }
     crate::tray::rebuild_menu(app);
     let total = app
@@ -196,8 +133,8 @@ static EN_TABLE: &[(&str, &str)] = &[
     ("A senha atual está incorreta.", "The current password is incorrect."),
     ("Defina uma senha de bloqueio primeiro.", "Set a lock password first."),
     ("A autenticação biométrica não está disponível neste dispositivo.", "Biometric authentication is not available on this device."),
-    ("Ativar desbloqueio por biometria no whatRust", "Turn on biometric unlock in whatRust"),
-    ("Desbloquear o whatRust", "Unlock whatRust"),
+    ("Ativar desbloqueio por biometria no Venwhatsapp", "Turn on biometric unlock in Venwhatsapp"),
+    ("Desbloquear o Venwhatsapp", "Unlock Venwhatsapp"),
     ("Não foi possível confirmar a biometria.", "Biometrics could not be confirmed."),
     ("O desbloqueio por biometria não está ativado.", "Biometric unlock is not on."),
     ("O tempo para confirmar a biometria terminou.", "Time to confirm biometrics ran out."),
@@ -208,8 +145,8 @@ static EN_TABLE: &[(&str, &str)] = &[
     ("Endereço do proxy inválido.", "Invalid proxy address."),
     ("O proxy exige macOS 14 (Sonoma) ou superior. Desative o proxy nas configurações.", "The proxy needs macOS 14 (Sonoma) or later. Turn the proxy off in settings."),
     ("O proxy exige macOS 14 (Sonoma) ou superior.", "The proxy needs macOS 14 (Sonoma) or later."),
-    ("Não foi possível concluir a redefinição. Feche outras instâncias do whatRust e tente novamente.", "The reset could not be completed. Close other instances of whatRust and try again."),
-    ("whatRust — Bloqueado", "whatRust — Locked"),
+    ("Não foi possível concluir a redefinição. Feche outras instâncias do Venwhatsapp e tente novamente.", "The reset could not be completed. Close other instances of Venwhatsapp and try again."),
+    ("Venwhatsapp — Bloqueado", "Venwhatsapp — Locked"),
     // downloads / files
     ("Download não encontrado", "Download not found"),
     ("Download concluído", "Download complete"),
@@ -243,7 +180,7 @@ static EN_TABLE: &[(&str, &str)] = &[
     ("Você tem uma nova mensagem.", "You have a new message."),
     ("Você tem novas mensagens em {0} conversas.", "You have new messages in {0} chats."),
     ("Você recebeu uma mensagem no WhatsApp.", "You received a message on WhatsApp."),
-    ("Teste do whatRust", "whatRust test"),
+    ("Teste do Venwhatsapp", "Venwhatsapp test"),
     ("Se você está vendo este aviso, o Windows exibiu o teste.", "If you can see this notice, Windows displayed the test."),
     ("Ative as notificações antes do teste.", "Turn on notifications before the test."),
     ("Teste solicitado. Confira o banner e a central do Windows; aceitação não confirma exibição.", "Test requested. Check the banner and the Windows notification center; acceptance does not confirm it was shown."),
@@ -262,11 +199,11 @@ static EN_TABLE: &[(&str, &str)] = &[
     ("Bloquear agora", "Lock now"),
     ("Bloquear", "Lock"),
     ("{0} conversas não lidas — WhatsApp", "{0} unread chats — WhatsApp"),
-    ("Configurações do whatRust", "whatRust settings"),
+    ("Configurações do Venwhatsapp", "Venwhatsapp settings"),
     ("Voltar ao WhatsApp", "Back to WhatsApp"),
     ("Desfoque de privacidade…", "Privacy blur…"),
     ("Recarregar conta", "Reload account"),
-    ("Sair do whatRust", "Quit whatRust"),
+    ("Sair do Venwhatsapp", "Quit Venwhatsapp"),
     // updates
     ("Instalador do Windows (NSIS)", "Windows installer (NSIS)"),
     ("Instalador do Windows (MSI)", "Windows installer (MSI)"),
@@ -274,7 +211,7 @@ static EN_TABLE: &[(&str, &str)] = &[
     ("Compilado do código-fonte", "Built from source"),
     ("Outro tipo de instalação", "Other install type"),
     ("Compilado do código-fonte: atualize o código e compile de novo, ou instale uma versão publicada.", "Built from source: pull the latest code and rebuild, or install a published release."),
-    ("Esta instalação não pode ser atualizada pelo whatRust. Baixe a nova versão na página de lançamentos ou use o gerenciador de pacotes.", "whatRust cannot update this installation. Download the new version from the releases page or use your package manager."),
+    ("Esta instalação não pode ser atualizada pelo Venwhatsapp. Baixe a nova versão na página de lançamentos ou use o gerenciador de pacotes.", "Venwhatsapp cannot update this installation. Download the new version from the releases page or use your package manager."),
     ("Proxy inválido: {0}", "Invalid proxy: {0}"),
     ("Falha de rede: {0}", "Network error: {0}"),
     ("Resposta inesperada do GitHub: {0}", "Unexpected answer from GitHub: {0}"),
@@ -286,7 +223,7 @@ static EN_TABLE: &[(&str, &str)] = &[
     ("Esta versão não tem um arquivo para o seu tipo de instalação ({0}).", "This release has no file for your install type ({0})."),
     ("Caminho do AppImage inválido.", "Invalid AppImage path."),
     ("Caminho do aplicativo inválido.", "Invalid app path."),
-    ("O endereço do arquivo não pertence às versões oficiais do whatRust.", "The file address is not one of the official whatRust releases."),
+    ("O endereço do arquivo não pertence às versões oficiais do Venwhatsapp.", "The file address is not one of the official Venwhatsapp releases."),
     ("Não foi possível criar uma pasta temporária: {0}", "Could not create a temporary folder: {0}"),
     ("{0} está danificado (a soma de verificação não confere); nada foi alterado.", "{0} is damaged (the checksum does not match); nothing was changed."),
     ("Não foi possível substituir {0}: {1}", "Could not replace {0}: {1}"),
@@ -299,18 +236,18 @@ static EN_TABLE: &[(&str, &str)] = &[
     ("O Flatpak não conseguiu instalar a atualização ({0}). O pacote verificado está em {1}; instale com: flatpak install {2} --reinstall {1}", "Flatpak could not install the update ({0}). The verified bundle is at {1}; install it with: flatpak install {2} --reinstall {1}"),
     ("O pkexec não foi encontrado. O pacote verificado está em {0}; instale com: sudo dpkg -i {0}", "pkexec was not found. The verified package is at {0}; install it with: sudo dpkg -i {0}"),
     ("Não foi possível iniciar o instalador: {0}", "Could not start the installer: {0}"),
-    ("whatRust {0} está disponível", "whatRust {0} is available"),
+    ("Venwhatsapp {0} está disponível", "Venwhatsapp {0} is available"),
     ("Abra Configurações → Atualizações para ver as novidades e instalar.", "Open Settings → Updates to see what's new and install it."),
-    ("whatRust {0} foi instalado", "whatRust {0} was installed"),
-    ("Reinicie o whatRust para usar a nova versão (Configurações → Atualizações).", "Restart whatRust to use the new version (Settings → Updates)."),
-    ("whatRust {0} está pronto para instalar", "whatRust {0} is ready to install"),
+    ("Venwhatsapp {0} foi instalado", "Venwhatsapp {0} was installed"),
+    ("Reinicie o Venwhatsapp para usar a nova versão (Configurações → Atualizações).", "Restart Venwhatsapp to use the new version (Settings → Updates)."),
+    ("Venwhatsapp {0} está pronto para instalar", "Venwhatsapp {0} is ready to install"),
     ("Abra Configurações → Atualizações e clique em Reiniciar e instalar.", "Open Settings → Updates and click Restart and install."),
     ("Não há atualização instalada para reiniciar.", "There is no installed update to restart into."),
-    ("Não foi possível reiniciar o whatRust. Abra-o manualmente.", "Could not restart whatRust. Please open it yourself."),
+    ("Não foi possível reiniciar o Venwhatsapp. Abra-o manualmente.", "Could not restart Venwhatsapp. Please open it yourself."),
     ("Atualizar para {0}", "Update to {0}"),
     // window titles
-    ("whatRust — Configurações", "whatRust — Settings"),
-    ("whatRust — Conta destacada", "whatRust — Detached account"),
+    ("Venwhatsapp — Configurações", "Venwhatsapp — Settings"),
+    ("Venwhatsapp — Conta destacada", "Venwhatsapp — Detached account"),
 ];
 
 #[cfg(test)]
@@ -345,21 +282,21 @@ mod tests {
     }
 
     #[test]
-    fn codes_round_trip_and_unknown_means_english() {
+    fn every_saved_language_code_is_normalized_to_english() {
         assert_eq!(Lang::from_code("en"), Lang::En);
         assert_eq!(Lang::from_code("EN-us"), Lang::En);
-        assert_eq!(Lang::from_code("pt-BR"), Lang::PtBr);
+        assert_eq!(Lang::from_code("pt-BR"), Lang::En);
         assert_eq!(Lang::from_code("fr"), Lang::En);
         assert_eq!(sanitize_code("zz"), EN);
-        assert_eq!(sanitize_code("pt-BR"), PT_BR);
+        assert_eq!(sanitize_code("pt-BR"), EN);
         assert_eq!(sanitize_code("en"), EN);
     }
 
     #[test]
-    fn os_locales_map_to_a_supported_language() {
-        assert_eq!(Lang::from_code("pt_BR.UTF-8"), Lang::PtBr);
-        assert_eq!(Lang::from_code("pt-PT"), Lang::PtBr);
-        assert_eq!(Lang::from_code("pt"), Lang::PtBr);
+    fn locale_codes_never_change_the_interface_language() {
+        assert_eq!(Lang::from_code("pt_BR.UTF-8"), Lang::En);
+        assert_eq!(Lang::from_code("pt-PT"), Lang::En);
+        assert_eq!(Lang::from_code("pt"), Lang::En);
         assert_eq!(Lang::from_code("en_US.UTF-8"), Lang::En);
         assert_eq!(Lang::from_code("ar-EG"), Lang::En);
         assert_eq!(Lang::from_code("ptx"), Lang::En);

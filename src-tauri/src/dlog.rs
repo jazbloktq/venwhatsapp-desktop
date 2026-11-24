@@ -3,8 +3,8 @@
 //! console — `eprintln!` goes nowhere there). Added for issue #3 (Windows
 //! toast notifications not appearing).
 //!
-//! - Windows: `%LOCALAPPDATA%\whatRust\logs\whatrust.log`
-//! - Linux:   `$XDG_DATA_HOME/whatRust/logs/whatrust.log` (or `~/.local/share/...`)
+//! - Windows: `%LOCALAPPDATA%\Venwhatsapp\logs\venwhatsapp.log`
+//! - Linux:   `$XDG_DATA_HOME/Venwhatsapp/logs/venwhatsapp.log` (or `~/.local/share/...`)
 //!
 //! Truncated once per launch via [`init`], appended thereafter, so it stays
 //! bounded to a single session. Best-effort: never panics. It records control
@@ -38,9 +38,9 @@ fn log_path() -> Option<PathBuf> {
         .map(PathBuf::from)
         .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".local/share")));
 
-    let dir = base?.join("whatRust").join("logs");
+    let dir = base?.join("Venwhatsapp").join("logs");
     std::fs::create_dir_all(&dir).ok()?;
-    Some(dir.join("whatrust.log"))
+    Some(dir.join("venwhatsapp.log"))
 }
 
 /// Start a fresh log for this launch (truncate). Best-effort.

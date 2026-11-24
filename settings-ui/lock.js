@@ -60,7 +60,7 @@ async function init() {
     e.preventDefault();
     const ok = await Dlg.confirm(
       "Isso desconecta todas as contas deste aplicativo e remove o bloqueio. Você precisará vincular o WhatsApp novamente pelo QR Code. Suas conversas continuam no celular.",
-      { title: "Redefinir o whatRust?", okLabel: "Redefinir", danger: true }
+      { title: "Redefinir o Venwhatsapp?", okLabel: "Redefinir", danger: true }
     );
     if (!ok) return;
     try {

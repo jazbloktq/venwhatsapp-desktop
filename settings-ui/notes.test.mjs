@@ -27,7 +27,7 @@ function fakeDoc() {
 }
 const tags = (el, acc = new Set()) => { for (const c of el.children) if (c.tag) { acc.add(c.tag); tags(c, acc); } return acc; };
 
-const REAL = `## whatRust v0.6.11
+const REAL = `## Venwhatsapp v0.6.11
 
 Drag-and-drop works again on Linux, plus a **privacy blur**.
 
@@ -36,15 +36,15 @@ Drag-and-drop works again on Linux, plus a **privacy blur**.
 - **Linux: drag-and-drop works again.** In 0.6.9 and 0.6.10, files never reached the chat. Thanks to @t43riz (#62).
 - **Thin scrollbars.** The chat list no longer shows a thick white scrollbar.
 
-### Support whatRust
+### Support Venwhatsapp
 
-[![Sponsor whatRust](https://img.shields.io/badge/Sponsor-ea4aaa)](https://github.com/sponsors/karem505)
+[![Sponsor Venwhatsapp](https://img.shields.io/badge/Sponsor-ea4aaa)](https://github.com/sponsors/karem505)
 
 \`\`\`bash
 curl -fsSL https://example.com/install.sh | sh
 \`\`\`
 
-**Full changelog:** https://github.com/karem505/whatRust/compare/v0.6.10...v0.6.11
+**Full changelog:** https://github.com/karem505/Venwhatsapp/compare/v0.6.10...v0.6.11
 `;
 
 check("headings, paragraphs, lists, code blocks and bold are understood", () => {

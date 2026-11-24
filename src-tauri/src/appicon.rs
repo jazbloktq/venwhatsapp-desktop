@@ -6,7 +6,7 @@
 //! - macOS: the Dock icon (`NSApplication.applicationIconImage`). The Dock
 //!   unread badge (`badge.rs`) is the dock *tile's* badge label, drawn over
 //!   whatever icon is shown, so both keep working together.
-//! - Windows: the icon of every whatRust window, which is what the taskbar and
+//! - Windows: the icon of every Venwhatsapp window, which is what the taskbar and
 //!   Alt-Tab show. The taskbar overlay badge is a separate per-window overlay.
 //! - Linux: the window icon. Wayland compositors ignore it and show the
 //!   `.desktop` file's icon instead, so there only X11 sessions change.

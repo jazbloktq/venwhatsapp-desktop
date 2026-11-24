@@ -10,12 +10,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release to test, e.g. v0.6.5 (empty = latest)"
+        description: "Release to test, e.g. v0.1.0 (empty = latest)"
         required: false
         default: ""
-  push:
-    paths:
-      - .github/workflows/smoke-windows.yml
 
 jobs:
   smoke:
@@ -36,8 +33,8 @@ jobs:
           $asset = $r.assets | Where-Object { $_.name -like '*_x64-setup.exe' } | Select-Object -First 1
           Invoke-WebRequest $asset.browser_download_url -OutFile setup.exe
           Start-Process .\setup.exe -ArgumentList '/S' -Wait
-          $exe = Get-ChildItem "$env:LOCALAPPDATA\whatRust", "$env:ProgramFiles\whatRust" -Filter whatRust.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (-not $exe) { throw 'whatRust.exe not found after install' }
+          $exe = Get-ChildItem "$env:LOCALAPPDATA\Venwhatsapp", "$env:ProgramFiles\Venwhatsapp" -Filter venwhatsapp.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) { throw 'venwhatsapp.exe not found after install' }
           "Installed: $($exe.FullName)"
           "EXE=$($exe.FullName)" | Out-File -Append $env:GITHUB_ENV
 
@@ -105,7 +102,7 @@ jobs:
           Start-Process 'whatsapp://send?phone=15551234567&text=smoke%20test'
           Start-Sleep 25
           Shot 'after-deeplink'
-          "whatRust processes: $(@(Get-Process whatRust -ErrorAction SilentlyContinue).Count) (single instance expected: 1)"
+          "Venwhatsapp processes: $(@(Get-Process venwhatsapp -ErrorAction SilentlyContinue).Count) (single instance expected: 1)"
           # Privacy blur panel (issue #80): focus the page, press Ctrl+Shift+P and
           # screenshot. The panel is a dark box in the bottom-right corner.
           Add-Type @'
@@ -126,7 +123,7 @@ jobs:
           Shot 'privacy-panel-shortcut'
           Combo @() 0x1B             # Esc closes it again
           Start-Sleep 1
-          # The same panel from the window menu: whatRust -> Privacy blur...
+          # The same panel from the window menu: Venwhatsapp -> Privacy blur...
           [U]::SetCursorPos($r.L + 35, $r.T + 38) | Out-Null
           [U]::mouse_event(2, 0, 0, 0, 0); [U]::mouse_event(4, 0, 0, 0, 0)
           Start-Sleep 1
@@ -139,7 +136,7 @@ jobs:
       - name: App log
         if: always()
         shell: pwsh
-        run: Get-Content "$env:LOCALAPPDATA\whatRust\logs\whatrust.log"
+        run: Get-Content "$env:LOCALAPPDATA\Venwhatsapp\logs\venwhatsapp.log"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()

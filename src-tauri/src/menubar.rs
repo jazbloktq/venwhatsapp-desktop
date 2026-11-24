@@ -417,7 +417,7 @@ mod imp {
         reveal(app, None, rect);
     }
 
-    /// The shortcut / `whatrust --toggle`: presented -> dismissed,
+    /// The shortcut / `venwhatsapp --toggle`: presented -> dismissed,
     /// otherwise -> presented.
     pub fn toggle(app: &AppHandle) {
         tray_click(app, None);
@@ -495,7 +495,7 @@ mod imp {
                 return;
             }
             use objc2_foundation::{NSActivityOptions, NSProcessInfo, NSString};
-            let reason = NSString::from_str("whatRust keeps its menu-bar sessions connected");
+            let reason = NSString::from_str("Venwhatsapp keeps its menu-bar sessions connected");
             let activity = NSProcessInfo::processInfo().beginActivityWithOptions_reason(
                 NSActivityOptions::UserInitiatedAllowingIdleSystemSleep,
                 &reason,

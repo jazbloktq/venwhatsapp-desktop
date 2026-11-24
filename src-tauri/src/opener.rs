@@ -466,7 +466,7 @@ mod tests {
         assert!(host_env_overrides(env(&[("LD_LIBRARY_PATH", "/opt/lib")])).is_empty());
 
         let mut out = host_env_overrides(env(&[
-            ("APPIMAGE", "/home/a/whatRust.AppImage"),
+            ("APPIMAGE", "/home/a/Venwhatsapp.AppImage"),
             ("APPDIR", "/tmp/.mount_whatRx/"),
             ("LD_LIBRARY_PATH", "/tmp/.mount_whatRx/usr/lib"),
             (

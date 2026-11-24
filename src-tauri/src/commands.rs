@@ -140,7 +140,7 @@ pub fn set_unread(
 
     // A new unread chat while the window is in the background: make sure the
     // user hears about it even when WhatsApp raises its own notification where
-    // whatRust can't see it (issue #3). Covered by a real notification, this
+    // Venwhatsapp can't see it (issue #3). Covered by a real notification, this
     // stays silent; see notify::unread_increased. A dismissed menu-bar panel
     // is a hidden window, so `is_visible()` already says nobody is watching.
     let focused = if crate::sessions::enabled() {
@@ -763,7 +763,7 @@ pub async fn rename_account(
         let visible_account = !crate::sessions::enabled()
             || crate::sessions::selected(&app, w.window().label()).as_deref() == Some(w.label());
         if visible_account {
-            let _ = w.window().set_title(&format!("whatRust — {name}"));
+            let _ = w.window().set_title(&format!("Venwhatsapp — {name}"));
         }
     }
     crate::tray::rebuild_menu(&app);
@@ -978,7 +978,7 @@ pub fn set_biometric_enabled(
         }
         if !crate::biometric::authenticate(
             &app,
-            tr("Ativar desbloqueio por biometria no whatRust").as_ref(),
+            tr("Ativar desbloqueio por biometria no Venwhatsapp").as_ref(),
         )? {
             return Err(tr("Não foi possível confirmar a biometria.").into());
         }
@@ -1048,7 +1048,7 @@ pub fn unlock_biometric(window: tauri::Webview, app: tauri::AppHandle) -> Result
     if !applock::load(&app).biometric_enabled {
         return Err(tr("O desbloqueio por biometria não está ativado.").into());
     }
-    if crate::biometric::authenticate(&app, tr("Desbloquear o whatRust").as_ref())? {
+    if crate::biometric::authenticate(&app, tr("Desbloquear o Venwhatsapp").as_ref())? {
         lock::unlock(&app);
         Ok(true)
     } else {

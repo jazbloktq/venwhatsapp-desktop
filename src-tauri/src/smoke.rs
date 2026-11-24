@@ -253,7 +253,7 @@ pub fn start(app: &AppHandle) {
             crate::notify::from_account(
                 &app,
                 &label,
-                "Teste isolado do whatRust",
+                "Teste isolado do Venwhatsapp",
                 "Verificação do envio ao Windows; nenhum contato recebeu mensagem.",
                 None,
                 crate::notify::Source::Test,
@@ -293,7 +293,7 @@ pub fn start(app: &AppHandle) {
                     .iter()
                     .filter(|n| n.source == crate::notify::Source::WebView2)
                     .count();
-                eval(&app,&label,"new Notification('Teste isolado do whatRust',{body:'Verificação da rota do navegador com janela oculta.'});true")?;
+                eval(&app,&label,"new Notification('Teste isolado do Venwhatsapp',{body:'Verificação da rota do navegador com janela oculta.'});true")?;
                 let delivered = wait_until(|| {
                     app.state::<crate::notify::Recent>()
                         .records()

@@ -17,7 +17,7 @@
       const d=await invoke("notification_diagnostics"), routes=document.getElementById("route-status"),history=document.getElementById("notification-history");
       routes.replaceChildren();history.replaceChildren();
       for(const a of d.accounts){const adapter=d.adapters["wa-"+a.id];routes.appendChild(row(a.name,t(d.native[a.id]?"Captura nativa ativa":"Captura nativa indisponível; ponte alternativa")+" · "+t(adapter?.mounted?"Controles integrados":"Acesso pelo menu da janela")+" · "+t(adapter?.detector?"Detector adicional disponível quando houver sinais confiáveis":"Aguardando conversa compatível")));}
-      for(const n of d.recent.slice(0,20)){const account=d.accounts.find(a=>a.id===n.account_id)?.name||"whatRust";history.appendChild(row(new Date(n.time*1000).toLocaleTimeString(I18n.locale())+" · "+account,t(names[n.status]||n.status)+(n.reason?" — "+t(reasons[n.reason]||n.reason):"")));}
+      for(const n of d.recent.slice(0,20)){const account=d.accounts.find(a=>a.id===n.account_id)?.name||"Venwhatsapp";history.appendChild(row(new Date(n.time*1000).toLocaleTimeString(I18n.locale())+" · "+account,t(names[n.status]||n.status)+(n.reason?" — "+t(reasons[n.reason]||n.reason):"")));}
       if(!d.recent.length)history.appendChild(row("Nenhum aviso registrado","Os próximos eventos aparecerão aqui durante esta execução."));
       document.documentElement.dataset.version=d.version;
     }catch(e){document.getElementById("diagnostic-note").textContent=String(e);}finally{diagnosticsBusy=false;}

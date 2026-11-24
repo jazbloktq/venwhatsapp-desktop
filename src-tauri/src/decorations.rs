@@ -2,7 +2,7 @@
 //!
 //! Tiling compositors don't draw title bars, and on Wayland Hyprland does not
 //! offer server-side decorations at all, so GTK falls back to drawing its own
-//! header bar with minimise/maximise/close buttons on every whatRust window.
+//! header bar with minimise/maximise/close buttons on every Venwhatsapp window.
 //! Those buttons do nothing useful there (the compositor owns window size and
 //! placement) and look out of place next to every other app, which shows none.
 //!

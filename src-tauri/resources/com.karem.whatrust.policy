@@ -4,7 +4,7 @@
  "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
 <policyconfig>
   <vendor>whatRust</vendor>
-  <action id="com.karem.whatrust.unlock">
+  <action id="com.venwhatsapp.desktop.unlock">
     <description>Unlock whatRust</description>
     <message>Authenticate to unlock whatRust</message>
     <defaults>

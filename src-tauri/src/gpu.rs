@@ -2,7 +2,7 @@
 //!
 //! The DMA-BUF renderer keeps scrolling and typing smooth, but it has crashed
 //! or rendered blank when NVIDIA's proprietary driver drives the display, so
-//! whatRust turns it off there. A hybrid laptop (Intel/AMD drives the screen,
+//! Venwhatsapp turns it off there. A hybrid laptop (Intel/AMD drives the screen,
 //! the NVIDIA GPU sits idle for offload) also has `/proc/driver/nvidia/version`,
 //! and turning the renderer off there made scrolling sluggish for no reason.
 //! It is now turned off only when every display GPU is NVIDIA.

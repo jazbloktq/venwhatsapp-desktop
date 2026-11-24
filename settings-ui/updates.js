@@ -1,6 +1,6 @@
 "use strict";
 // Settings -> Updates. The backend (update_service.rs) owns all state; this page
-// renders the status it returns and pushes through "whatrust-update-status".
+// renders the status it returns and pushes through "venwhatsapp-update-status".
 (function () {
   const invoke = window.__TAURI__.core.invoke;
   const $ = (id) => document.getElementById(id);
@@ -21,10 +21,10 @@
   // What the "Install updates automatically" switch does for this install type.
   function autoInstallNote(m) {
     if (m.id === "appimage" || m.id === "macos") {
-      return t("Baixa, confere e substitui o aplicativo em segundo plano. A nova versão começa na próxima vez que você abrir o whatRust.");
+      return t("Baixa, confere e substitui o aplicativo em segundo plano. A nova versão começa na próxima vez que você abrir o Venwhatsapp.");
     }
     if (m.id === "windows-nsis") {
-      return t("Baixa e confere em segundo plano. O instalador roda quando você clica em Reiniciar e instalar, porque ele reinicia o whatRust.");
+      return t("Baixa e confere em segundo plano. O instalador roda quando você clica em Reiniciar e instalar, porque ele reinicia o Venwhatsapp.");
     }
     return t("Não se aplica a este tipo de instalação: ela precisa de senha ou é atualizada por outra ferramenta. Você instala com um clique.");
   }
@@ -72,17 +72,17 @@
         break;
       case "staged":
         title = t("A versão {0} está pronta para instalar", [v]);
-        message = t("O instalador já foi baixado e conferido. O whatRust vai fechar e abrir de novo ao instalar.");
+        message = t("O instalador já foi baixado e conferido. O Venwhatsapp vai fechar e abrir de novo ao instalar.");
         apply = true;
         break;
       case "ready":
         title = t("A versão {0} foi instalada", [v]);
-        message = t("Reinicie o whatRust para usar a nova versão.");
+        message = t("Reinicie o Venwhatsapp para usar a nova versão.");
         restart = true;
         break;
       case "handoff":
         title = t("Instalando a versão {0}…", [v]);
-        message = t("O instalador assumiu. O whatRust vai fechar e abrir de novo sozinho.");
+        message = t("O instalador assumiu. O Venwhatsapp vai fechar e abrir de novo sozinho.");
         break;
       case "opened":
         title = t("Arquivo baixado e conferido");
@@ -176,7 +176,7 @@
       setTimeout(() => ($("upd_copy").textContent = t("Copiar")), 2000);
     });
     const ev = window.__TAURI__ && window.__TAURI__.event;
-    if (ev) ev.listen("whatrust-update-status", (e) => render(e.payload)).catch(() => {});
+    if (ev) ev.listen("venwhatsapp-update-status", (e) => render(e.payload)).catch(() => {});
     window.addEventListener("focus", refresh);
     window.addEventListener("i18n", () => st && render(st));
     refresh();

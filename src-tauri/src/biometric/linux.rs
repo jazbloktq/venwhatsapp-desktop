@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use zbus::blocking::Connection;
 use zbus_polkit::policykit1::{AuthorityProxyBlocking, CheckAuthorizationFlags, Subject};
 
-const ACTION_ID: &str = "com.karem.whatrust.unlock";
+const ACTION_ID: &str = "com.venwhatsapp.desktop.unlock";
 
 pub fn availability() -> Availability {
     // Connection::system() and AuthorityProxyBlocking::new both return zbus::Result,

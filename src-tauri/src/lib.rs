@@ -86,7 +86,7 @@ pub fn run() {
         cfg!(debug_assertions) && std::env::var("WHATRUST_SMOKE").as_deref() == Ok("1");
     let mut context = tauri::generate_context!();
     if smoke_mode {
-        context.config_mut().identifier = "com.karem.whatrust.smoke".into();
+        context.config_mut().identifier = "com.venwhatsapp.desktop.smoke".into();
     }
     // Linux (issue #87): software rendering on GPUs too old for WebKit's GPU
     // compositor (blank window after login), or when Settings → Rendering asks
@@ -101,7 +101,7 @@ pub fn run() {
     {
         let single_instance = tauri_plugin_single_instance::Builder::<tauri::Wry>::new().callback(
             |app, args, _cwd| {
-                // `whatrust --toggle` (bind it to an OS keyboard shortcut — the reliable
+                // `venwhatsapp --toggle` (bind it to an OS keyboard shortcut — the reliable
                 // global-hotkey path on Wayland, where in-process X11 grabs don't fire)
                 // toggles the active window. Otherwise a 2nd launch raises it, except an
                 // autostart relaunch carrying --minimized (stay hidden in the tray).
@@ -176,7 +176,7 @@ pub fn run() {
                 tauri_plugin_global_shortcut::Builder::new()
                     .with_handler(|app, shortcut, event| {
                         // In-process global hotkey (X11 / Windows / macOS). On Wayland
-                        // this won't fire — use `whatrust --toggle` via an OS shortcut.
+                        // this won't fire — use `venwhatsapp --toggle` via an OS shortcut.
                         if event.state() == tauri_plugin_global_shortcut::ShortcutState::Pressed {
                             let s = settings::load(app);
                             let is_blur = settings::is_blur_shortcut(&s, shortcut);
@@ -428,7 +428,7 @@ pub fn run() {
             Ok(())
         })
         .build(context)
-        .expect("error while building whatRust")
+        .expect("error while building Venwhatsapp")
         .run(|_app_handle, _event| {
             // Give restyled panels their real geometry back before the exit
             // saves window state. The tray Quit path does the same.

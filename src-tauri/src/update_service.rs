@@ -23,7 +23,7 @@ use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 
 const FIRST_CHECK_DELAY: Duration = Duration::from_secs(60);
-/// With `WHATRUST_UPDATE_FEED` set (tests, local end-to-end runs) nobody waits a minute.
+/// With `VENWHATSAPP_UPDATE_FEED` set (tests, local end-to-end runs) nobody waits a minute.
 const FIRST_CHECK_DELAY_OVERRIDDEN: Duration = Duration::from_secs(3);
 const CHECK_EVERY: Duration = Duration::from_secs(6 * 60 * 60);
 const TICK: Duration = Duration::from_secs(5 * 60);
@@ -179,7 +179,7 @@ pub fn status_json(app: &AppHandle) -> Value {
 
 /// Tell the Updates page (and the tray) that something changed.
 fn publish(app: &AppHandle) {
-    let _ = app.emit("whatrust-update-status", status_json(app));
+    let _ = app.emit("venwhatsapp-update-status", status_json(app));
     let a = app.clone();
     let _ = app.run_on_main_thread(move || crate::tray::rebuild_menu(&a));
 }
@@ -249,7 +249,7 @@ fn announce(app: &AppHandle, rel: &Release) {
     save_persisted(app, &p);
     crate::notify::show_update(
         app,
-        &trf("whatRust {0} está disponível", &[&rel.version]),
+        &trf("Venwhatsapp {0} está disponível", &[&rel.version]),
         &tr("Abra Configurações → Atualizações para ver as novidades e instalar."),
     );
 }
@@ -311,8 +311,8 @@ fn finish(app: &AppHandle, rel: &Release, outcome: Outcome, auto: bool) {
             if auto {
                 crate::notify::show_update(
                     app,
-                    &trf("whatRust {0} foi instalado", &[&rel.version]),
-                    &tr("Reinicie o whatRust para usar a nova versão (Configurações → Atualizações)."),
+                    &trf("Venwhatsapp {0} foi instalado", &[&rel.version]),
+                    &tr("Reinicie o Venwhatsapp para usar a nova versão (Configurações → Atualizações)."),
                 );
             }
         }
@@ -323,7 +323,7 @@ fn finish(app: &AppHandle, rel: &Release, outcome: Outcome, auto: bool) {
             });
             publish(app);
             BUSY.store(false, Ordering::SeqCst);
-            // Let the installer take over: it closes whatRust itself if we are still
+            // Let the installer take over: it closes Venwhatsapp itself if we are still
             // running, then starts the new version.
             let app = app.clone();
             std::thread::spawn(move || {
@@ -405,7 +405,7 @@ fn run_install(app: &AppHandle, auto: bool) {
         publish(app);
         crate::notify::show_update(
             app,
-            &trf("whatRust {0} está pronto para instalar", &[&rel.version]),
+            &trf("Venwhatsapp {0} está pronto para instalar", &[&rel.version]),
             &tr("Abra Configurações → Atualizações e clique em Reiniciar e instalar."),
         );
         return;
@@ -453,7 +453,9 @@ pub fn restart(app: &AppHandle) -> Result<(), String> {
         return Err(tr("Não há atualização instalada para reiniciar.").into_owned());
     };
     if !updater::relaunch(&plan) {
-        return Err(tr("Não foi possível reiniciar o whatRust. Abra-o manualmente.").into_owned());
+        return Err(
+            tr("Não foi possível reiniciar o Venwhatsapp. Abra-o manualmente.").into_owned(),
+        );
     }
     quit(app);
     Ok(())

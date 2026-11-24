@@ -115,8 +115,8 @@ pub fn verify_password(password: &str, phc: &str) -> bool {
     }
 }
 
-/// Paths a factory reset removes, given whatRust's two app dirs. Pure so it can be
-/// unit-tested. `app_data_dir` is whatRust-exclusive (`<base>/com.karem.whatrust`) and
+/// Paths a factory reset removes, given Venwhatsapp's two app dirs. Pure so it can be
+/// unit-tested. `app_data_dir` is Venwhatsapp-exclusive (`<base>/com.venwhatsapp.desktop`) and
 /// holds BOTH the default account's webview store (directly under it, on Linux/Windows)
 /// and the per-account `profiles/` dirs — removing it logs every account out.
 fn reset_targets(config_dir: &Path, data_dir: &Path) -> Vec<PathBuf> {
@@ -173,7 +173,7 @@ fn complete_reset_paths(config: &Path, data: &Path) -> std::io::Result<bool> {
 pub fn complete_pending_reset(app: &AppHandle) -> Result<(), String> {
     let config = app.path().app_config_dir().map_err(|e| e.to_string())?;
     let data = app.path().app_data_dir().map_err(|e| e.to_string())?;
-    complete_reset_paths(&config,&data).map(|_|()).map_err(|_| tr("Não foi possível concluir a redefinição. Feche outras instâncias do whatRust e tente novamente.").into_owned())
+    complete_reset_paths(&config,&data).map(|_|()).map_err(|_| tr("Não foi possível concluir a redefinição. Feche outras instâncias do Venwhatsapp e tente novamente.").into_owned())
 }
 
 #[cfg(test)]
@@ -336,8 +336,8 @@ mod tests {
         let marker = reset_marker(&config);
         assert!(!marker.starts_with(&config));
         assert_eq!(
-            reset_marker(Path::new("com.karem.whatrust")),
-            Path::new("com.karem.whatrust.reset-pending")
+            reset_marker(Path::new("com.venwhatsapp.desktop")),
+            Path::new("com.venwhatsapp.desktop.reset-pending")
         );
         std::fs::write(&marker, b"reset-sessions-v1").unwrap();
         assert!(complete_reset_paths(&config, &config).unwrap());

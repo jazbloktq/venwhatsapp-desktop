@@ -1,16 +1,16 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>whatRust — Configurações</title>
+    <title>Venwhatsapp — Configurações</title>
     <script src="i18n.js"></script>
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="dialog.css" />
   </head>
   <body>
-    <header class="app-header"><div><strong>Configurações</strong><span>whatRust</span></div><button id="back-to-chat" type="button" class="secondary back-button" aria-label="Voltar ao WhatsApp" title="Voltar ao WhatsApp" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5 M12 5l-7 7 7 7"/></svg><span>Voltar ao WhatsApp</span></button></header>
-    <div class="settings-layout"><nav class="settings-nav" aria-label="Configurações"><a href="#sec-contas">Contas</a><a href="#sec-notificacoes">Notificações</a><a href="#sec-aparencia">Aparência</a><a href="#sec-seguranca">Segurança</a><a href="#sec-sistema">Inicialização</a><a href="#sec-rede">Rede</a><a href="#sec-atalhos">Atalhos</a><a href="#sec-diagnostico">Diagnóstico</a><a class="nav-about" href="#sec-atualizacoes"><span class="nav-about-text"><span>Sobre o whatRust</span><span class="nav-version" id="nav_version"></span></span></a></nav>
+    <header class="app-header"><div><strong>Configurações</strong><span>Venwhatsapp</span></div><button id="back-to-chat" type="button" class="secondary back-button" aria-label="Voltar ao WhatsApp" title="Voltar ao WhatsApp" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5 M12 5l-7 7 7 7"/></svg><span>Voltar ao WhatsApp</span></button></header>
+    <div class="settings-layout"><nav class="settings-nav" aria-label="Configurações"><a href="#sec-contas">Contas</a><a href="#sec-notificacoes">Notificações</a><a href="#sec-aparencia">Aparência</a><a href="#sec-seguranca">Segurança</a><a href="#sec-sistema">Inicialização</a><a href="#sec-rede">Rede</a><a href="#sec-atalhos">Atalhos</a><a href="#sec-diagnostico">Diagnóstico</a><a class="nav-about" href="#sec-atualizacoes"><span class="nav-about-text"><span>Sobre o Venwhatsapp</span><span class="nav-version" id="nav_version"></span></span></a></nav>
     <!-- Local preferences use familiar WhatsApp rows: titled
          groups of boxed-list rows, a title + subtitle on the left and the control
          on the right. Element ids are what main.js uses; keep them stable. -->
@@ -24,7 +24,7 @@
         <div class="boxed-list" id="single_window_row" hidden>
           <label class="row">
             <span class="row-text"><span class="row-title">Mostrar todas as contas em uma janela</span>
-              <span class="row-subtitle" id="single_window_subtitle">Uma janela com um seletor de contas; as contas ocultas continuam conectadas. Requer reiniciar o whatRust.</span></span>
+              <span class="row-subtitle" id="single_window_subtitle">Uma janela com um seletor de contas; as contas ocultas continuam conectadas. Requer reiniciar o Venwhatsapp.</span></span>
             <input type="checkbox" class="switch" id="single_window" />
           </label>
         </div>
@@ -37,7 +37,7 @@
         <p id="accounts-note" class="group-note" role="status" aria-live="polite"></p>
       </section>
       <section class="group" id="sec-notificacoes"><h2 class="group-title">Notificações</h2><div class="boxed-list">
-<label class="row"><span class="row-text"><span class="row-title">Receber notificações</span><span class="row-subtitle">Ativa os avisos de mensagens do whatRust.</span></span><input type="checkbox" class="switch" id="notifications"></label><label class="row"><span class="row-text"><span class="row-title">Avisar com o aplicativo aberto</span><span class="row-subtitle">Receber avisos mesmo com a janela em primeiro plano.</span></span><input type="checkbox" class="switch" id="notify_when_focused"></label><label class="row"><span class="row-text"><span class="row-title">Avisar na conversa que estou lendo</span><span class="row-subtitle">Também avisar mensagens novas na conversa aberta.</span></span><input type="checkbox" class="switch" id="notify_active_chat"></label><label class="row"><span class="row-text"><span class="row-title">Respeitar conversas silenciadas</span><span class="row-subtitle">Quando o silenciamento não puder ser confirmado, o detector adicional permanece silencioso.</span></span><input type="checkbox" class="switch" id="respect_muted"></label></div><p class="group-note">O detector adicional só usa mensagens novas identificáveis. Conversas silenciadas, histórico e estados desconhecidos não geram avisos adicionais.</p></section>
+<label class="row"><span class="row-text"><span class="row-title">Receber notificações</span><span class="row-subtitle">Ativa os avisos de mensagens do Venwhatsapp.</span></span><input type="checkbox" class="switch" id="notifications"></label><label class="row"><span class="row-text"><span class="row-title">Avisar com o aplicativo aberto</span><span class="row-subtitle">Receber avisos mesmo com a janela em primeiro plano.</span></span><input type="checkbox" class="switch" id="notify_when_focused"></label><label class="row"><span class="row-text"><span class="row-title">Avisar na conversa que estou lendo</span><span class="row-subtitle">Também avisar mensagens novas na conversa aberta.</span></span><input type="checkbox" class="switch" id="notify_active_chat"></label><label class="row"><span class="row-text"><span class="row-title">Respeitar conversas silenciadas</span><span class="row-subtitle">Quando o silenciamento não puder ser confirmado, o detector adicional permanece silencioso.</span></span><input type="checkbox" class="switch" id="respect_muted"></label></div><p class="group-note">O detector adicional só usa mensagens novas identificáveis. Conversas silenciadas, histórico e estados desconhecidos não geram avisos adicionais.</p></section>
 
       <section class="group" id="sec-sistema">
         <h2 class="group-title">Comportamento</h2>
@@ -58,7 +58,7 @@
           </label>
           <label class="row mac-only" id="menu_bar_icon_row" hidden>
             <span class="row-text"><span class="row-title">Mostrar ícone na barra de menus</span>
-              <span class="row-subtitle" id="menu_bar_icon_subtitle">Quando desativado, clique no ícone do Dock para abrir o whatRust</span></span>
+              <span class="row-subtitle" id="menu_bar_icon_subtitle">Quando desativado, clique no ícone do Dock para abrir o Venwhatsapp</span></span>
             <input type="checkbox" class="switch" id="menu_bar_icon" />
           </label>
           <label class="row mac-only" hidden>
@@ -68,7 +68,7 @@
           </label>
           <label class="row mac-only" hidden>
             <span class="row-text"><span class="row-title">Ocultar ícone do Dock</span>
-              <span class="row-subtitle">Mantém a janela principal; o ícone da barra de menus passa a ser a forma de reabrir o whatRust</span></span>
+              <span class="row-subtitle">Mantém a janela principal; o ícone da barra de menus passa a ser a forma de reabrir o Venwhatsapp</span></span>
             <input type="checkbox" class="switch" id="hide_dock_icon" />
           </label>
         </div>
@@ -89,7 +89,7 @@
           </label>
           <label class="row">
             <span class="row-text"><span class="row-title">Ocultar anúncios do app do WhatsApp</span>
-              <span class="row-subtitle">Esconde os convites para baixar o WhatsApp para Windows ou Mac. Vale ao reiniciar o whatRust.</span></span>
+              <span class="row-subtitle">Esconde os convites para baixar o WhatsApp para Windows ou Mac. Vale ao reiniciar o Venwhatsapp.</span></span>
             <input type="checkbox" class="switch" id="hide_app_banner" />
           </label>
           <label class="row linux-only" id="title_bar_row" hidden>
@@ -103,18 +103,10 @@
           </label>
           <label class="row linux-only" id="rendering_row" hidden>
             <span class="row-text"><span class="row-title">Renderização</span>
-              <span class="row-subtitle" id="rendering_subtitle">Use o modo compatível se a janela ficar em branco em placas de vídeo antigas. Vale ao reiniciar o whatRust.</span></span>
+              <span class="row-subtitle" id="rendering_subtitle">Use o modo compatível se a janela ficar em branco em placas de vídeo antigas. Vale ao reiniciar o Venwhatsapp.</span></span>
             <select id="rendering">
               <option value="auto">Automático</option>
               <option value="software">Compatível (sem GPU)</option>
-            </select>
-          </label>
-          <label class="row">
-            <span class="row-text"><span class="row-title">Idioma</span>
-              <span class="row-subtitle">Idioma da interface do whatRust.</span></span>
-            <select id="language">
-              <option value="pt-BR">Português (Brasil)</option>
-              <option value="en">English</option>
             </select>
           </label>
           <div class="row">
@@ -158,8 +150,8 @@
             <input type="text" id="proxy_port" inputmode="numeric" autocomplete="off" placeholder="1080" />
           </label>
         </div>
-        <p class="group-note">Proxy com usuário e senha não é suportado: os navegadores embutidos não aceitam credenciais por esse caminho. A alteração vale após reiniciar o whatRust.</p>
-        <p id="proxy_restart" class="hotkey-hint" hidden><span>Reinicie o whatRust para aplicar o proxy.</span> <button type="button" id="proxy_restart_btn" class="secondary">Reiniciar agora</button></p>
+        <p class="group-note">Proxy com usuário e senha não é suportado: os navegadores embutidos não aceitam credenciais por esse caminho. A alteração vale após reiniciar o Venwhatsapp.</p>
+        <p id="proxy_restart" class="hotkey-hint" hidden><span>Reinicie o Venwhatsapp para aplicar o proxy.</span> <button type="button" id="proxy_restart_btn" class="secondary">Reiniciar agora</button></p>
       </section>
 
       <section class="group" id="sec-atalhos">
@@ -191,7 +183,7 @@
           </div>
         </div>
         <p id="hotkey_hint" class="hotkey-hint" hidden></p>
-        <p class="group-note">No Linux/Wayland, configure <code>whatrust --toggle</code> nos atalhos do sistema.</p>
+        <p class="group-note">No Linux/Wayland, configure <code>venwhatsapp --toggle</code> nos atalhos do sistema.</p>
       </section>
 
       <section class="group" id="sec-seguranca">
@@ -240,7 +232,7 @@
           </div>
         </div>
 
-        <p class="group-note">O bloqueio protege o acesso às janelas do whatRust. Ele
+        <p class="group-note">O bloqueio protege o acesso às janelas do Venwhatsapp. Ele
           <strong>não</strong> criptografa os dados no disco.</p>
       </section>
       <section class="group" id="sec-diagnostico"><h2 class="group-title">Diagnóstico de notificações</h2>
@@ -249,7 +241,7 @@
       <h3>Atividade desta sessão</h3><p class="group-note">Somente horário, conta e resultado. Não armazena o texto das mensagens.</p><div id="notification-history" class="boxed-list"></div>
       </section>
       <section class="group" id="sec-atualizacoes">
-        <h2 class="group-title">Sobre o whatRust</h2>
+        <h2 class="group-title">Sobre o Venwhatsapp</h2>
         <h3>Atualizações</h3>
         <div class="boxed-list">
           <label class="row">
@@ -300,7 +292,7 @@
         </div>
         <p class="group-note">Versões 0.6.10 e anteriores não atualizam sozinhas: instale esta versão manualmente uma vez. Cada arquivo baixado é conferido com a soma de verificação (SHA-256) publicada na versão antes de ser instalado.</p>
         <h3>Contribuidores</h3>
-        <p class="group-note">Obrigado a todas as pessoas que contribuíram com código para o whatRust.</p>
+        <p class="group-note">Obrigado a todas as pessoas que contribuíram com código para o Venwhatsapp.</p>
         <ul id="contributors" class="contributors"></ul>
       </section>
     </main></div>

@@ -1,7 +1,7 @@
-//! WhatsApp links that whatRust opens itself instead of handing to a browser.
+//! WhatsApp links that Venwhatsapp opens itself instead of handing to a browser.
 //!
 //! - `whatsapp://send?phone=…&text=…` and `whatsapp://chat?code=…` — the scheme
-//!   "Open app" buttons on websites use. The packages register whatRust as its
+//!   "Open app" buttons on websites use. The packages register Venwhatsapp as its
 //!   handler (issue #23); the OS then starts us (or, through single-instance,
 //!   the running copy) with the link as an argument, or on macOS sends an
 //!   open-URL event.
@@ -209,7 +209,7 @@ mod tests {
     #[test]
     fn ordinary_links_are_not_whatsapp_links() {
         for raw in [
-            "https://github.com/karem505/whatRust",
+            "https://github.com/jazbloktq/venwhatsapp-desktop",
             "https://web.whatsapp.com/",
             "https://www.whatsapp.com/download",
             "mailto:someone@example.com",
@@ -223,19 +223,19 @@ mod tests {
     #[test]
     fn the_link_is_found_among_launch_arguments() {
         assert_eq!(
-            link_from_args(&["whatrust", "--minimized", "whatsapp://send?phone=1"]),
+            link_from_args(&["venwhatsapp", "--minimized", "whatsapp://send?phone=1"]),
             Some("whatsapp://send?phone=1".into())
         );
         assert_eq!(
-            link_from_args(&["/usr/bin/whatrust", "https://wa.me/123"]),
+            link_from_args(&["/usr/bin/venwhatsapp", "https://wa.me/123"]),
             Some("https://wa.me/123".into())
         );
         // A bare scheme link still counts: it should bring the window forward.
         assert_eq!(
-            link_from_args(&["whatrust", "whatsapp://"]),
+            link_from_args(&["venwhatsapp", "whatsapp://"]),
             Some("whatsapp://".into())
         );
-        assert_eq!(link_from_args(&["whatrust", "--toggle"]), None);
+        assert_eq!(link_from_args(&["venwhatsapp", "--toggle"]), None);
         // argv[0] is never taken for a link.
         assert_eq!(link_from_args(&["whatsapp://send?phone=1"]), None);
     }

@@ -1,8 +1,7 @@
 const invoke = window.__TAURI__.core.invoke;
-const LANGS = ["pt-BR", "en"];
 const BOOLS = ["close_to_tray", "start_minimized", "autostart", "notifications", "hotkey_enabled", "blur_hotkey_enabled", "menu_bar_icon", "menubar_only", "hide_dock_icon", "notify_when_focused", "notify_active_chat", "respect_muted", "single_window", "auto_update_check", "auto_update_install", "hide_app_banner"];
 const ZOOM_DEFAULT = 1;
-const SINGLE_WINDOW_SUBTITLE = "Uma janela com um seletor de contas; as contas ocultas continuam conectadas. Requer reiniciar o whatRust.";
+const SINGLE_WINDOW_SUBTITLE = "Uma janela com um seletor de contas; as contas ocultas continuam conectadas. Requer reiniciar o Venwhatsapp.";
 
 // The menu-bar rows are macOS-only. get_settings reports the OS this build targets
 // in `platform`; the rows start hidden and appear here once it is known.
@@ -12,7 +11,7 @@ function setMacRows(visible) {
 
 // The "Show menu bar icon" subtitle as authored in the markup; kept so it can
 // be restored when menu-bar-only is turned back off.
-const MENU_ICON_SUBTITLE = "Quando desativado, clique no ícone do Dock para abrir o whatRust";
+const MENU_ICON_SUBTITLE = "Quando desativado, clique no ícone do Dock para abrir o Venwhatsapp";
 
 // In menu-bar-only mode the tray icon is the app's only entry point and the
 // backend keeps it visible, so the switch is locked on.
@@ -121,7 +120,7 @@ async function load() {
   document.getElementById("rendering").value = s.rendering === "software" ? "software" : "auto";
   document.getElementById("rendering_subtitle").textContent = s.legacy_gpu
     ? t("Placa de vídeo antiga detectada: o modo automático já renderiza sem GPU.")
-    : "Use o modo compatível se a janela ficar em branco em placas de vídeo antigas. Vale ao reiniciar o whatRust.";
+    : "Use o modo compatível se a janela ficar em branco em placas de vídeo antigas. Vale ao reiniciar o Venwhatsapp.";
   if (/Win/.test(navigator.platform || navigator.userAgent)) {
     const startupRow = document.getElementById("start_minimized").closest("label");
     startupRow.querySelector(".row-title").textContent = "Iniciar minimizado com o Windows";
@@ -146,17 +145,16 @@ async function load() {
   const swNote = document.getElementById("single_window_subtitle");
   if (s.single_window_supported && !!s.single_window !== !!s.single_window_active) {
     swNote.textContent = s.single_window && s.menubar_only
-      ? "Reinicie o whatRust para aplicar. O modo somente barra de menus tem prioridade sobre esta opção."
-      : "Reinicie o whatRust para aplicar a mudança.";
+      ? "Reinicie o Venwhatsapp para aplicar. O modo somente barra de menus tem prioridade sobre esta opção."
+      : "Reinicie o Venwhatsapp para aplicar a mudança.";
   } else {
     swNote.textContent = SINGLE_WINDOW_SUBTITLE;
   }
   document.getElementById("hotkey").value = window.HotkeyFmt.toDisplay(s.hotkey || "CmdOrCtrl+Shift+W");
   document.getElementById("blur_hotkey").value = window.HotkeyFmt.toDisplay(s.blur_hotkey || "CmdOrCtrl+Shift+B");
   selectNearestZoom(Number.isFinite(s.zoom) ? s.zoom : ZOOM_DEFAULT);
-  const lang = LANGS.includes(s.language) ? s.language : "en";
-  document.getElementById("language").value = lang;
-  if (I18n.lang() !== lang) I18n.setLang(lang);
+  s.language = "en";
+  if (I18n.lang() !== "en") I18n.setLang("en");
   menuBarIconChecked = document.getElementById("menu_bar_icon").checked;
   syncMenuBarIconRow();
   downloadDir = s.download_dir || null;
@@ -217,7 +215,7 @@ async function save() {
   s.zoom = parseFloat(document.getElementById("zoom").value) || ZOOM_DEFAULT;
   s.title_bar = document.getElementById("title_bar").value || "auto";
   s.rendering = document.getElementById("rendering").value || "auto";
-  s.language = document.getElementById("language").value;
+  s.language = "en";
   s.download_dir = downloadDir;
   if (proxySupported) {
     s.proxy_mode = document.getElementById("proxy_mode").value;
@@ -417,7 +415,7 @@ window.addEventListener("DOMContentLoaded", () => {
   loadLock();
   wireLock();
   document.getElementById("save").addEventListener("click", save);
-  // The update switches apply at once, like zoom and language.
+  // Update settings apply as soon as they are saved.
   for (const id of ["auto_update_check", "auto_update_install"]) {
     document.getElementById(id).addEventListener("change", save);
   }
@@ -454,11 +452,6 @@ window.addEventListener("DOMContentLoaded", () => {
     invoke("get_settings").then((s) => {
       if (Number.isFinite(s.zoom)) selectNearestZoom(s.zoom);
     }).catch(() => {});
-  });
-  // Language applies at once, like zoom.
-  document.getElementById("language").addEventListener("change", async () => {
-    I18n.setLang(document.getElementById("language").value);
-    await save();
   });
 });
 

@@ -4968,8 +4968,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "whatrust"
-version = "0.6.16"
+name = "venwhatsapp"
+version = "0.1.0"
 dependencies = [
  "argon2",
  "block2",

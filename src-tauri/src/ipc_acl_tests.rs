@@ -1,7 +1,7 @@
-//! Which window, from which origin, may call which whatRust command.
+//! Which window, from which origin, may call which Venwhatsapp command.
 //!
 //! Tauri refuses a custom command from a remote origin unless a capability with
-//! a matching `remote` URL grants it. whatRust had no app permission manifest,
+//! a matching `remote` URL grants it. Venwhatsapp had no app permission manifest,
 //! so nothing could grant `notify`/`set_unread`/`dlog` to web.whatsapp.com: every
 //! call from the injected bridge was rejected, and bridge.js swallows the
 //! rejection — no message notifications and no unread badge (issues #3, #32).
@@ -167,7 +167,7 @@ fn the_whatsapp_page_cannot_reach_settings_or_lock_commands() {
             "the page must not reach {cmd}"
         );
     }
-    // Nor plugin commands that would bypass whatRust's lock-aware `notify`.
+    // Nor plugin commands that would bypass Venwhatsapp's lock-aware `notify`.
     assert!(!allowed(
         &app,
         "wa-default",

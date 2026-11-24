@@ -1,19 +1,13 @@
 "use strict";
-// Interface language for the local pages (settings, lock screen, shell).
-//
-// Portuguese (Brazil) is the source language: the HTML and scripts are written
-// in Portuguese and EN maps each Portuguese string to its English text. With
-// English selected, text nodes and a few attributes whose (whitespace-collapsed)
-// text is a key are rewritten, including nodes added later by scripts, so code
-// that does `el.textContent = "Salvar"` needs no change. Strings with variable
-// parts go through t("Abrir {0}", [name]). A string without an entry is shown
-// as written. The start language is injected by Rust as window.__WR_LANG; the
-// settings page switches it live with I18n.setLang().
+// English-only translations for the settings, lock screen, and account shell.
+// Portuguese source strings from the desktop base are mapped to English. The
+// observer also translates text and attributes added after the page loads.
+// Variable strings use t("Abrir {0}", [name]); unknown strings stay visible.
 (function (root) {
   var EN = {
     // titles
-    "whatRust — Configurações": "whatRust — Settings",
-    "whatRust — Bloqueado": "whatRust — Locked",
+    "Venwhatsapp — Configurações": "Venwhatsapp — Settings",
+    "Venwhatsapp — Bloqueado": "Venwhatsapp — Locked",
     // header and navigation
     "Configurações": "Settings",
     "Voltar ao WhatsApp": "Back to WhatsApp",
@@ -29,8 +23,8 @@
     "Desativado": "Off",
     "Servidor": "Host",
     "Porta": "Port",
-    "Proxy com usuário e senha não é suportado: os navegadores embutidos não aceitam credenciais por esse caminho. A alteração vale após reiniciar o whatRust.": "Proxies that need a username and password are not supported: the built-in browser engines do not accept credentials this way. Changes take effect after restarting whatRust.",
-    "Reinicie o whatRust para aplicar o proxy.": "Restart whatRust to apply the proxy.",
+    "Proxy com usuário e senha não é suportado: os navegadores embutidos não aceitam credenciais por esse caminho. A alteração vale após reiniciar o Venwhatsapp.": "Proxies that need a username and password are not supported: the built-in browser engines do not accept credentials this way. Changes take effect after restarting Venwhatsapp.",
+    "Reinicie o Venwhatsapp para aplicar o proxy.": "Restart Venwhatsapp to apply the proxy.",
     "Reiniciar agora": "Restart now",
     "Diagnóstico": "Diagnostics",
     // accounts
@@ -39,9 +33,9 @@
     "Adicionar": "Add",
     "Múltiplas contas exigem macOS 14 ou superior.": "Multiple accounts require macOS 14 or later.",
     "Mostrar todas as contas em uma janela": "Show all accounts in one window",
-    "Uma janela com um seletor de contas; as contas ocultas continuam conectadas. Requer reiniciar o whatRust.": "One window with an account switcher; hidden accounts stay connected. Requires restarting whatRust.",
-    "Reinicie o whatRust para aplicar a mudança.": "Restart whatRust to apply the change.",
-    "Reinicie o whatRust para aplicar. O modo somente barra de menus tem prioridade sobre esta opção.": "Restart whatRust to apply. Menu-bar-only mode takes priority over this option.",
+    "Uma janela com um seletor de contas; as contas ocultas continuam conectadas. Requer reiniciar o Venwhatsapp.": "One window with an account switcher; hidden accounts stay connected. Requires restarting Venwhatsapp.",
+    "Reinicie o Venwhatsapp para aplicar a mudança.": "Restart Venwhatsapp to apply the change.",
+    "Reinicie o Venwhatsapp para aplicar. O modo somente barra de menus tem prioridade sobre esta opção.": "Restart Venwhatsapp to apply. Menu-bar-only mode takes priority over this option.",
     "Aguarde…": "Please wait…",
     "Ações de {0}": "Actions for {0}",
     "Abrir conta": "Open account",
@@ -64,9 +58,9 @@
     "Não foi possível carregar as contas: {0}": "Could not load the accounts: {0}",
     // updates
     "Atualizações": "Updates",
-    "Sobre o whatRust": "About whatRust",
+    "Sobre o Venwhatsapp": "About Venwhatsapp",
     "Contribuidores": "Contributors",
-    "Obrigado a todas as pessoas que contribuíram com código para o whatRust.": "Thanks to everyone who has contributed code to whatRust.",
+    "Obrigado a todas as pessoas que contribuíram com código para o Venwhatsapp.": "Thanks to everyone who has contributed code to Venwhatsapp.",
     "Alterar foto": "Change photo",
     "Remover foto": "Remove photo",
     "A imagem tem mais de 5 MB.": "The image is larger than 5 MB.",
@@ -87,8 +81,8 @@
     "Novidades": "What's new",
     "Versões 0.6.10 e anteriores não atualizam sozinhas: instale esta versão manualmente uma vez. Cada arquivo baixado é conferido com a soma de verificação (SHA-256) publicada na versão antes de ser instalado.": "Versions 0.6.10 and older cannot update themselves: install this version by hand once. Every downloaded file is checked against the checksum (SHA-256) published with the release before it is installed.",
     "Nunca": "Never",
-    "Baixa, confere e substitui o aplicativo em segundo plano. A nova versão começa na próxima vez que você abrir o whatRust.": "Downloads, verifies and replaces the app in the background. The new version starts the next time you open whatRust.",
-    "Baixa e confere em segundo plano. O instalador roda quando você clica em Reiniciar e instalar, porque ele reinicia o whatRust.": "Downloads and verifies in the background. The installer runs when you click Restart and install, because it restarts whatRust.",
+    "Baixa, confere e substitui o aplicativo em segundo plano. A nova versão começa na próxima vez que você abrir o Venwhatsapp.": "Downloads, verifies and replaces the app in the background. The new version starts the next time you open Venwhatsapp.",
+    "Baixa e confere em segundo plano. O instalador roda quando você clica em Reiniciar e instalar, porque ele reinicia o Venwhatsapp.": "Downloads and verifies in the background. The installer runs when you click Restart and install, because it restarts Venwhatsapp.",
     "Não se aplica a este tipo de instalação: ela precisa de senha ou é atualizada por outra ferramenta. Você instala com um clique.": "Does not apply to this install type: it needs a password or is updated by another tool. You install with one click.",
     "Procurando atualizações…": "Looking for updates…",
     "Você está na versão mais recente": "You are on the latest version",
@@ -101,10 +95,10 @@
     "Instalando a versão {0}…": "Installing version {0}…",
     "Digite sua senha de administrador quando o sistema pedir.": "Enter your administrator password when the system asks.",
     "A versão {0} está pronta para instalar": "Version {0} is ready to install",
-    "O instalador já foi baixado e conferido. O whatRust vai fechar e abrir de novo ao instalar.": "The installer has been downloaded and verified. whatRust will close and open again when it installs.",
+    "O instalador já foi baixado e conferido. O Venwhatsapp vai fechar e abrir de novo ao instalar.": "The installer has been downloaded and verified. Venwhatsapp will close and open again when it installs.",
     "A versão {0} foi instalada": "Version {0} was installed",
-    "Reinicie o whatRust para usar a nova versão.": "Restart whatRust to use the new version.",
-    "O instalador assumiu. O whatRust vai fechar e abrir de novo sozinho.": "The installer has taken over. whatRust will close and open again by itself.",
+    "Reinicie o Venwhatsapp para usar a nova versão.": "Restart Venwhatsapp to use the new version.",
+    "O instalador assumiu. O Venwhatsapp vai fechar e abrir de novo sozinho.": "The installer has taken over. Venwhatsapp will close and open again by itself.",
     "Arquivo baixado e conferido": "File downloaded and verified",
     "O pacote foi aberto na central de programas do sistema; confirme a instalação lá. Se nada abrir, execute o comando abaixo.": "The package was opened in your system's software center; confirm the installation there. If nothing opens, run the command below.",
     "O arquivo foi aberto. Termine a instalação por lá.": "The file was opened. Finish the installation there.",
@@ -114,7 +108,7 @@
     "Selecione e copie": "Select and copy",
     // notifications
     "Receber notificações": "Receive notifications",
-    "Ativa os avisos de mensagens do whatRust.": "Turns on whatRust message alerts.",
+    "Ativa os avisos de mensagens do Venwhatsapp.": "Turns on Venwhatsapp message alerts.",
     "Avisar com o aplicativo aberto": "Notify while the app is open",
     "Receber avisos mesmo com a janela em primeiro plano.": "Get alerts even when the window is in the foreground.",
     "Avisar na conversa que estou lendo": "Notify in the chat I am reading",
@@ -130,7 +124,7 @@
     "Iniciar sem abrir a janela principal": "Start without opening the main window",
     "Iniciar com o sistema": "Start with the system",
     "Mostrar ícone na barra de menus": "Show icon in the menu bar",
-    "Quando desativado, clique no ícone do Dock para abrir o whatRust": "When off, click the Dock icon to open whatRust",
+    "Quando desativado, clique no ícone do Dock para abrir o Venwhatsapp": "When off, click the Dock icon to open Venwhatsapp",
     "Iniciar minimizado com o Windows": "Start minimized with Windows",
     "Vale apenas ao entrar no Windows. Ao abrir pelo atalho, a janela sempre aparece.": "Applies only at Windows sign-in. When opened from a shortcut, the window always appears.",
     // appearance and language
@@ -148,8 +142,8 @@
     "Gerenciadores de janelas lado a lado, como o Hyprland, não usam barra de título.": "Tiling window managers such as Hyprland don't use a title bar.",
     "Renderização": "Rendering",
     "Ocultar anúncios do app do WhatsApp": "Hide WhatsApp app promotions",
-    "Esconde os convites para baixar o WhatsApp para Windows ou Mac. Vale ao reiniciar o whatRust.": "Hides the prompts to download WhatsApp for Windows or Mac. Applies after restarting whatRust.",
-    "Use o modo compatível se a janela ficar em branco em placas de vídeo antigas. Vale ao reiniciar o whatRust.": "Use Compatible if the window stays blank on an old graphics card. Applies after restarting whatRust.",
+    "Esconde os convites para baixar o WhatsApp para Windows ou Mac. Vale ao reiniciar o Venwhatsapp.": "Hides the prompts to download WhatsApp for Windows or Mac. Applies after restarting Venwhatsapp.",
+    "Use o modo compatível se a janela ficar em branco em placas de vídeo antigas. Vale ao reiniciar o Venwhatsapp.": "Use Compatible if the window stays blank on an old graphics card. Applies after restarting Venwhatsapp.",
     "Compatível (sem GPU)": "Compatible (no GPU)",
     "Placa de vídeo antiga detectada: o modo automático já renderiza sem GPU.": "Old graphics card detected: Automatic already renders without the GPU.",
     "Detectado: {0}. No modo automático a barra fica oculta.": "Detected: {0}. In automatic mode the bar is hidden.",
@@ -166,9 +160,9 @@
     "O ícone da bandeja é o único ponto de entrada no modo somente barra de menus, por isso permanece visível": "The tray icon is the only entry point in menu-bar-only mode, so it stays visible",
     "Requer macOS 14 (Sonoma) ou superior — este Mac não consegue manter um painel oculto conectado": "Requires macOS 14 (Sonoma) or later — this Mac cannot keep a hidden panel connected",
     "Ocultar ícone do Dock": "Hide Dock icon",
-    "Mantém a janela principal; o ícone da barra de menus passa a ser a forma de reabrir o whatRust": "Keeps the main window; the menu bar icon becomes the way to reopen whatRust",
+    "Mantém a janela principal; o ícone da barra de menus passa a ser a forma de reabrir o Venwhatsapp": "Keeps the main window; the menu bar icon becomes the way to reopen Venwhatsapp",
     "Idioma": "Language",
-    "Idioma da interface do whatRust.": "Language of the whatRust interface.",
+    "Idioma da interface do Venwhatsapp.": "Language of the Venwhatsapp interface.",
     // shortcuts
     "Atalho para mostrar ou ocultar": "Shortcut to show or hide",
     "Uma combinação de teclas para mostrar ou ocultar o aplicativo": "A key combination to show or hide the app",
@@ -196,7 +190,7 @@
     "Bloquear agora": "Lock now",
     "Alterar senha…": "Change password…",
     "Desativar…": "Turn off…",
-    "O bloqueio protege o acesso às janelas do whatRust. Ele": "The lock protects access to the whatRust windows. It",
+    "O bloqueio protege o acesso às janelas do Venwhatsapp. Ele": "The lock protects access to the Venwhatsapp windows. It",
     "não": "does not",
     "criptografa os dados no disco.": "encrypt the data on disk.",
     "Não foi possível ativar o bloqueio": "Could not turn on the lock",
@@ -255,8 +249,8 @@
     "As alterações ainda não foram salvas.": "Your changes have not been saved.",
     "Voltar": "Back",
     // shell
-    "Controles do whatRust": "whatRust controls",
-    "Configurações do whatRust": "whatRust settings",
+    "Controles do Venwhatsapp": "Venwhatsapp controls",
+    "Configurações do Venwhatsapp": "Venwhatsapp settings",
     "Trocar conta do WhatsApp": "Switch WhatsApp account",
     "Escolha uma conta para continuar": "Choose an account to continue",
     "Use o seletor acima para abrir um WhatsApp ou as configurações para gerenciar suas contas.": "Use the selector above to open a WhatsApp, or settings to manage your accounts.",
@@ -271,7 +265,7 @@
     "Não foi possível confirmar a biometria. Digite sua senha.": "Could not confirm biometrics. Enter your password.",
     "Muitas tentativas. Tente de novo em {0}s.": "Too many attempts. Try again in {0}s.",
     "Isso desconecta todas as contas deste aplicativo e remove o bloqueio. Você precisará vincular o WhatsApp novamente pelo QR Code. Suas conversas continuam no celular.": "This signs out every account in this app and removes the lock. You will need to link WhatsApp again with the QR code. Your chats stay on your phone.",
-    "Redefinir o whatRust?": "Reset whatRust?",
+    "Redefinir o Venwhatsapp?": "Reset Venwhatsapp?",
     "Redefinir": "Reset",
     "Não foi possível redefinir o aplicativo. Tente novamente.": "Could not reset the app. Try again.",
     // dialogs
@@ -279,7 +273,7 @@
     "Este campo não pode ficar vazio.": "This field cannot be empty."
   };
 
-  var lang = root.__WR_LANG === "en" ? "en" : "pt-BR";
+  var lang = "en";
 
   function norm(s) { return String(s).replace(/\s+/g, " ").trim(); }
   function has(k) { return Object.prototype.hasOwnProperty.call(EN, k); }
@@ -300,7 +294,7 @@
     norm: norm,
     t: t,
     lang: function () { return lang; },
-    locale: function () { return lang === "en" ? "en-US" : "pt-BR"; },
+    locale: function () { return "en-US"; },
     setLang: function () {},
   };
   root.I18n = api;
@@ -374,7 +368,7 @@
   }
 
   api.setLang = function (next) {
-    lang = next === "en" ? "en" : "pt-BR";
+    lang = "en";
     root.__WR_LANG = lang;
     document.documentElement.lang = lang;
     translateAll();

@@ -2,7 +2,7 @@
 //! toast notifications actually render for the installed app (issue #3).
 //!
 //! Every toast `notify.rs` raises carries the bundle identifier
-//! (`com.karem.whatrust`) as its `System.AppUserModel.ID`.
+//! (`com.venwhatsapp.desktop`) as its `System.AppUserModel.ID`.
 //! Windows only renders a toast whose AUMID is *registered* on the system. The
 //! NSIS/MSI installers do tag their Start-Menu shortcut with the AUMID, but
 //! that registration is fragile: the Desktop shortcut carries no AUMID, a
@@ -29,7 +29,7 @@ pub fn register(app: &AppHandle) {
     {
         let config = app.config();
         let aumid = &config.identifier;
-        let display = config.product_name.as_deref().unwrap_or("whatRust");
+        let display = config.product_name.as_deref().unwrap_or("Venwhatsapp");
         let icon = app
             .path()
             .app_local_data_dir()

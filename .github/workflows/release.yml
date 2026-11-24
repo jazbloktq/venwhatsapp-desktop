@@ -1,27 +1,23 @@
-name: release
+name: Windows release
+
 on:
   push:
     tags: ["v*"]
-  # Manual run. Leave `tag` empty to only build; give the version's tag (e.g.
-  # v0.6.4) to cut that release from the selected branch without pushing a tag
-  # first — the tag is created when the finished release is published.
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag to create from this branch (e.g. v0.6.4); empty = build only"
+        description: "Release tag matching the Cargo version (for example v0.1.0); leave empty to build only"
         required: false
         default: ""
 
 jobs:
-  # Which release (if any) this run makes: the pushed tag, or the tag given to
-  # a manual run after checking it names the version being built and is new.
   prepare:
     runs-on: ubuntu-24.04
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: Resolve the release tag
+      - name: Validate release tag
         id: tag
         env:
           INPUT_TAG: ${{ inputs.tag }}
@@ -31,185 +27,72 @@ jobs:
           else
             tag="$INPUT_TAG"
           fi
-          if [ -n "$tag" ] && [ "$GITHUB_REF_TYPE" != tag ]; then
+          if [ -n "$tag" ]; then
             version=$(sed -n 's/^version = "\(.*\)"/\1/p' src-tauri/Cargo.toml | head -n1)
-            case "$tag" in
-              "v$version") ;;
-              *) echo "::error::tag $tag does not match the version being built (v$version)"; exit 1 ;;
-            esac
-            if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
+            [ "$tag" = "v$version" ] || { echo "::error::tag $tag does not match v$version"; exit 1; }
+            if [ "$GITHUB_REF_TYPE" != tag ] && git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
               echo "::error::tag $tag already exists"; exit 1
             fi
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "release tag: ${tag:-<none, build only>}"
 
   build:
     needs: prepare
-    env:
-      RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+    runs-on: windows-latest
     permissions:
       contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        # x86_64 and aarch64 for every OS. `target` cross-compiles where the
-        # runner's own architecture is the other one; `bundles` limits the
-        # formats where one can't be built for that target (WiX/MSI has no ARM64).
-        include:
-          - platform: ubuntu-22.04
-          - platform: ubuntu-22.04-arm
-          - platform: windows-latest
-          - platform: windows-latest
-            target: aarch64-pc-windows-msvc
-            args: --target aarch64-pc-windows-msvc --bundles nsis
-          - platform: macos-latest
-          - platform: macos-latest
-            target: x86_64-apple-darwin
-            args: --target x86_64-apple-darwin
-    name: build (${{ matrix.platform }}${{ matrix.target && format(', {0}', matrix.target) || '' }})
-    runs-on: ${{ matrix.platform }}
+    env:
+      RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Install Linux deps
-        if: startsWith(matrix.platform, 'ubuntu-')
-        run: |
-          sudo apt update
-          sudo apt install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
-            libxdo-dev libdbus-1-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev libhunspell-dev patchelf \
-            desktop-file-utils
-
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
-        with:
-          targets: ${{ matrix.target }}
 
       - uses: swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           workspaces: "./src-tauri -> target"
-          key: ${{ matrix.target }}
 
-      # ring (rustls) builds its ARM64 Windows assembly with clang; the runner
-      # image ships LLVM but not on PATH.
-      - name: Put clang on PATH (Windows ARM64)
-        if: matrix.target == 'aarch64-pc-windows-msvc'
-        shell: bash
-        run: |
-          echo "C:\\Program Files\\LLVM\\bin" >> "$GITHUB_PATH"
-          "/c/Program Files/LLVM/bin/clang" --version | head -1
-
-      # Release notes live in the repo (docs/release-notes/<tag>.md) and become
-      # the release body, so a release never goes out with an empty page.
-      - name: Release notes
+      - name: Load release notes
         id: notes
         shell: bash
         run: |
-          f="docs/release-notes/${RELEASE_TAG}.md"
+          file="docs/release-notes/${RELEASE_TAG}.md"
           {
-            echo "body<<WHATRUST_NOTES_EOF"
-            if [ -n "$RELEASE_TAG" ] && [ -f "$f" ]; then cat "$f"; fi
-            echo "WHATRUST_NOTES_EOF"
+            echo "body<<VENWHATSAPP_NOTES_EOF"
+            if [ -n "$RELEASE_TAG" ] && [ -f "$file" ]; then cat "$file"; fi
+            echo "VENWHATSAPP_NOTES_EOF"
           } >> "$GITHUB_OUTPUT"
 
       - uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # Only create a release for a version tag (pushed, or given to a manual
-          # run); otherwise tagName is empty so it just builds (no release
-          # named after the branch). The draft is published by publish-flatpak.
           tagName: ${{ env.RELEASE_TAG }}
-          releaseName: ${{ env.RELEASE_TAG != '' && format('whatRust {0}', env.RELEASE_TAG) || '' }}
+          releaseName: ${{ env.RELEASE_TAG != '' && format('Venwhatsapp {0}', env.RELEASE_TAG) || '' }}
           releaseBody: ${{ steps.notes.outputs.body }}
           releaseDraft: ${{ env.RELEASE_TAG != '' }}
           prerelease: false
-          args: ${{ matrix.args }}
 
-      # Issue #22: the bundler copies the build host's libwayland-client into the
-      # AppImage, and on any distro with a newer Mesa that old copy stops Mesa's
-      # EGL from loading (blank window, EGL_BAD_PARAMETER). Strip the host-only
-      # libraries, repack, verify, and replace the asset tauri-action uploaded.
-      - name: Strip host-only libraries from the AppImage
-        if: startsWith(matrix.platform, 'ubuntu-')
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          APPIMAGE_EXTRACT_AND_RUN: "1"
-        run: |
-          curl -fsSL -o "$RUNNER_TEMP/appimagetool" \
-            "https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-$(uname -m).AppImage"
-          chmod +x "$RUNNER_TEMP/appimagetool"
-          set -- src-tauri/target/release/bundle/appimage/*.AppImage
-          [ -f "$1" ] || { echo "no AppImage was built" >&2; exit 1; }
-          for img in "$@"; do
-            APPIMAGETOOL="$RUNNER_TEMP/appimagetool" scripts/strip-appimage-libs.sh "$img"
-            if [ -n "$RELEASE_TAG" ]; then
-              gh release upload "$RELEASE_TAG" "$img" --clobber
-            fi
-          done
-
-  flatpak:
-    name: Flatpak (${{ matrix.variant.arch }})
-    needs: prepare
-    strategy:
-      fail-fast: false
-      matrix:
-        variant:
-          - arch: x86_64
-            runner: ubuntu-24.04
-          - arch: aarch64
-            runner: ubuntu-24.04-arm
-    runs-on: ${{ matrix.variant.runner }}
-    container:
-      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-48
-      options: --privileged
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          submodules: recursive
-      - uses: flatpak/flatpak-github-actions/flatpak-builder@401fe28a8384095fc1531b9d320b292f0ee45adb # v6.7
-        with:
-          bundle: whatRust_${{ matrix.variant.arch }}.flatpak
-          manifest-path: io.github.karem505.whatRust.yml
-          branch: stable
-          cache-key: whatrust-flatpak-${{ matrix.variant.arch }}-${{ github.sha }}
-          arch: ${{ matrix.variant.arch }}
-          verbose: true
-
-  publish-flatpak:
-    name: Attach Flatpaks to release
+  publish:
     if: needs.prepare.outputs.tag != ''
-    needs: [prepare, build, flatpak]
+    needs: [prepare, build]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
     steps:
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
-          pattern: whatRust_*-*.flatpak
-          path: flatpak-assets
-          merge-multiple: true
-      # The in-app updater only installs a download whose SHA-256 is listed in the
-      # release's SHA256SUMS. Compute it from the assets as they sit on the draft
-      # (every platform's bundles plus the Flatpaks uploaded above), so what users
-      # download is exactly what was hashed, and upload it BEFORE publishing:
-      # `releases/latest` must never point at a release without SHA256SUMS.
-      - name: Upload Flatpak bundles, write SHA256SUMS and publish release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+      - name: Check installer assets, checksum them, and publish
+        shell: bash
         run: |
           set -euo pipefail
-          gh release upload "$RELEASE_TAG" flatpak-assets/*.flatpak --clobber
-
-          # Download every asset of the draft through the API (a draft has no tag
-          # yet on a manual run, so `gh release download <tag>` cannot find it).
-          rid=$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
+          release_id=$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
             --jq ".[] | select(.tag_name == \"$RELEASE_TAG\") | .id" | head -n1)
-          [ -n "$rid" ] || { echo "::error::no release found for $RELEASE_TAG"; exit 1; }
+          [ -n "$release_id" ] || { echo "::error::no draft release found for $RELEASE_TAG"; exit 1; }
           mkdir -p release-assets
-          gh api --paginate "repos/$GH_REPO/releases/$rid/assets?per_page=100" \
+          gh api --paginate "repos/$GH_REPO/releases/$release_id/assets?per_page=100" \
             --jq '.[] | "\(.id) \(.size) \(.name)"' > assets.txt
           while read -r id size name; do
             case "$name" in
@@ -218,24 +101,14 @@ jobs:
             esac
             gh api -H "Accept: application/octet-stream" \
               "repos/$GH_REPO/releases/assets/$id" > "release-assets/$name"
-            # Hash exactly what users download: a short or altered download must
-            # never end up in SHA256SUMS.
-            got=$(stat -c %s "release-assets/$name")
-            [ "$got" = "$size" ] || { echo "::error::$name: downloaded $got bytes, release lists $size"; exit 1; }
+            actual_size=$(stat -c %s "release-assets/$name")
+            [ "$actual_size" = "$size" ] || { echo "::error::$name download size mismatch"; exit 1; }
           done < assets.txt
-          # A release must carry the bundles the updater looks for; fail rather than
-          # publish one it cannot use.
-          for pattern in '*_x64-setup.exe' '*_x64_en-US.msi' '*_arm64-setup.exe' \
-                         '*_aarch64.dmg' '*_x64.dmg' '*_aarch64.app.tar.gz' '*_x64.app.tar.gz' \
-                         '*_amd64.deb' '*_amd64.AppImage' '*_arm64.deb' '*_aarch64.AppImage' \
-                         'whatRust_x86_64.flatpak' 'whatRust_aarch64.flatpak'; do
-            compgen -G "release-assets/$pattern" >/dev/null \
-              || { echo "::error::release $RELEASE_TAG has no asset matching $pattern"; exit 1; }
-          done
+          compgen -G 'release-assets/Venwhatsapp_*_x64-setup.exe' >/dev/null \
+            || { echo "::error::NSIS installer is missing"; exit 1; }
+          compgen -G 'release-assets/Venwhatsapp_*_x64_en-US.msi' >/dev/null \
+            || { echo "::error::MSI installer is missing"; exit 1; }
           rm -f release-assets/SHA256SUMS
           (cd release-assets && sha256sum -- * > SHA256SUMS)
-          echo "--- SHA256SUMS ---"; cat release-assets/SHA256SUMS
           gh release upload "$RELEASE_TAG" release-assets/SHA256SUMS --clobber
-
-          # Publishing also creates the tag when a manual run cut the release.
           gh release edit "$RELEASE_TAG" --draft=false --latest

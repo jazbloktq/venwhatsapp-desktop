@@ -132,7 +132,7 @@ pub fn initialize(app: &AppHandle, hidden: bool) -> tauri::Result<Window> {
         return Ok(w);
     }
     let w = WindowBuilder::new(app, "main")
-        .title("whatRust")
+        .title("Venwhatsapp")
         .background_color(tauri::utils::config::Color(22, 23, 23, 255))
         .inner_size(1100., 800.)
         .min_inner_size(560., 480.)
@@ -274,7 +274,7 @@ fn install_menu(app: &AppHandle, w: &Window) -> tauri::Result<()> {
     let accounts = MenuItemBuilder::with_id("app.accounts", tr("Contas"))
         .accelerator("Ctrl+Shift+A")
         .build(app)?;
-    let settings = MenuItemBuilder::with_id("app.settings", tr("Configurações do whatRust"))
+    let settings = MenuItemBuilder::with_id("app.settings", tr("Configurações do Venwhatsapp"))
         .accelerator("Ctrl+,")
         .build(app)?;
     let back = MenuItemBuilder::with_id("app.back", tr("Voltar ao WhatsApp")).build(app)?;
@@ -283,8 +283,8 @@ fn install_menu(app: &AppHandle, w: &Window) -> tauri::Result<()> {
         MenuItemBuilder::with_id("app.privacy", tr("Desfoque de privacidade…")).build(app)?;
     let reload = MenuItemBuilder::with_id("app.reload", tr("Recarregar conta")).build(app)?;
     let lock = MenuItemBuilder::with_id("app.lock", tr("Bloquear")).build(app)?;
-    let quit = MenuItemBuilder::with_id("app.quit", tr("Sair do whatRust")).build(app)?;
-    let submenu = SubmenuBuilder::new(app, "whatRust")
+    let quit = MenuItemBuilder::with_id("app.quit", tr("Sair do Venwhatsapp")).build(app)?;
+    let submenu = SubmenuBuilder::new(app, "Venwhatsapp")
         .items(&[&accounts, &settings, &back, &privacy, &reload, &lock, &quit])
         .build()?;
     let menu = MenuBuilder::new(app).item(&submenu).build()?;
@@ -395,7 +395,7 @@ fn activate_on_main(app: &AppHandle, label: &str) {
         })
         .map(|a| a.name)
         .unwrap_or_else(|| "WhatsApp".into());
-    let _ = parent.set_title(&format!("whatRust — {name}"));
+    let _ = parent.set_title(&format!("Venwhatsapp — {name}"));
     let _ = parent.show();
     let _ = parent.unminimize();
     set_view_visible(app, &view, true);
@@ -578,7 +578,7 @@ pub fn detach(app: &AppHandle, id: &str) -> Result<(), String> {
     }
     let parent_label = format!("detached-{id}");
     let w = WindowBuilder::new(app, &parent_label)
-        .title(tr("whatRust — Conta destacada"))
+        .title(tr("Venwhatsapp — Conta destacada"))
         .background_color(tauri::utils::config::Color(22, 23, 23, 255))
         .inner_size(1000., 760.)
         .min_inner_size(560., 480.)
@@ -625,7 +625,7 @@ pub fn attach(app: &AppHandle, id: &str) -> Result<(), String> {
 
 /// Closing a detached window returns its live WebView to the main window while
 /// preserving the account that was already selected there. Explicitly choosing
-/// “Reintegrar à janela” still activates the returned account via [`attach`].
+/// “Reattach to window” still activates the returned account via [`attach`].
 fn attach_after_window_close(app: &AppHandle, id: &str) -> Result<(), String> {
     attach_inner(app, id, false)
 }
@@ -701,7 +701,7 @@ fn restore_main_after_detached_close(
             })
             .map(|account| account.name)
             .unwrap_or_else(|| "WhatsApp".into());
-        let _ = window.set_title(&format!("whatRust — {name}"));
+        let _ = window.set_title(&format!("Venwhatsapp — {name}"));
         let _ = window.show();
         let _ = window.unminimize();
         layout(app, "main");

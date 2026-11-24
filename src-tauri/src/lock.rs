@@ -263,7 +263,7 @@ fn show_lock_window_inner(app: &AppHandle) {
     }
     let built = WebviewWindowBuilder::new(app, "lock", WebviewUrl::App("lock.html".into()))
         .initialization_script(crate::i18n::init_script())
-        .title(tr("whatRust — Bloqueado"))
+        .title(tr("Venwhatsapp — Bloqueado"))
         .inner_size(420.0, 540.0)
         .resizable(false)
         .decorations(false)

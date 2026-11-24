@@ -73,6 +73,63 @@ const MEDIA_JS: &str = if cfg!(target_os = "linux") {
     ""
 };
 
+const VENWHATSAPP_WPP_JS: &str = include_str!("../resources/venwhatsapp/wppconnect-wa.js");
+const VENWHATSAPP_LOGGER_JS: &str = include_str!("../resources/venwhatsapp/logger.js");
+
+/// Start the capture scripts only after WhatsApp's logged-in chat shell exists.
+/// This keeps WA-JS out of the QR login page, which also avoids its intermittent
+/// white loading screen, and runs the exact same logger pipeline as the extension.
+fn venwhatsapp_bootstrap() -> &'static str {
+    static SCRIPT: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    SCRIPT.get_or_init(|| {
+        let mut js = String::with_capacity(VENWHATSAPP_WPP_JS.len() + VENWHATSAPP_LOGGER_JS.len() + 1700);
+        js.push_str(
+            r#"(() => {
+  if (window.top !== window || location.origin !== 'https://web.whatsapp.com') return;
+  if (window.__venwhatsappDesktopScriptsStarted) return;
+  let started = false;
+  let pollId = 0;
+  let observer;
+  const stopWaiting = () => {
+    if (pollId) { clearInterval(pollId); pollId = 0; }
+    if (observer) observer.disconnect();
+  };
+  const startVenwhatsapp = () => {
+    if (started || !document.querySelector('#side')) return;
+    started = true;
+    stopWaiting();
+    window.__venwhatsappDesktopScriptsStarted = true;
+    try {
+"#,
+        );
+        js.push_str(VENWHATSAPP_WPP_JS);
+        js.push_str(
+            r#"
+    } catch (error) { console.error('[Venwhatsapp Desktop] WA-JS startup failed', error); }
+    try {
+"#,
+        );
+        js.push_str(VENWHATSAPP_LOGGER_JS);
+        js.push_str(
+            r#"
+    } catch (error) { console.error('[Venwhatsapp Desktop] logger startup failed', error); }
+  };
+  const beginWaiting = () => {
+    if (document.documentElement) observer.observe(document.documentElement, { childList: true, subtree: true });
+    startVenwhatsapp();
+  };
+  observer = new MutationObserver(startVenwhatsapp);
+  pollId = setInterval(startVenwhatsapp, 500);
+  setTimeout(stopWaiting, 60 * 60 * 1000);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', beginWaiting, { once: true });
+  else beginWaiting();
+})();
+"#,
+        );
+        js
+    })
+}
+
 /// Platform routing keeps the existing non-Windows account-window flow.
 pub fn open_account_window(app: &AppHandle, account: &Account, hidden: bool) -> tauri::Result<()> {
     #[cfg(windows)]
@@ -120,6 +177,7 @@ macro_rules! account_webview {
             } else {
                 String::new()
             })
+            .initialization_script(venwhatsapp_bootstrap())
             .initialization_script(include_str!("../resources/integration.js"))
             .initialization_script(BRIDGE_JS)
             .initialization_script(MEDIA_JS)
@@ -283,7 +341,7 @@ pub(crate) fn build_account_window(
     let icon = crate::appicon::for_account(app, &account.id);
 
     let builder = WebviewWindowBuilder::new(app, &label, WebviewUrl::External(url))
-        .title(format!("whatRust — {}", account.name))
+        .title(format!("Venwhatsapp — {}", account.name))
         .inner_size(1100.0, 800.0)
         .min_inner_size(560.0, 480.0)
         .decorations(crate::decorations::show(app))
@@ -360,11 +418,21 @@ pub(crate) fn build_account_view(
     let builder = builder.disable_drag_drop_handler();
     #[cfg(windows)]
     let builder = {
-        let mut builder = builder;
-        if account.id != "default" {
-            builder = builder.data_directory(accounts::profile_dir(app, &account.id)?);
-        }
-        builder
+        // Keep Venwhatsapp's existing WebView2 profile for the default account
+        // so saved WhatsApp login and the local edit/delete history survive the
+        // move from the earlier WebView2 wrapper.
+        let profile = if account.id == "default" {
+            if let Some(local) = std::env::var_os("LOCALAPPDATA") {
+                std::path::PathBuf::from(local)
+                    .join("Venwhatsapp Desktop")
+                    .join("WebView2")
+            } else {
+                accounts::profile_dir(app, &account.id)?
+            }
+        } else {
+            accounts::profile_dir(app, &account.id)?
+        };
+        builder.data_directory(profile)
     };
     #[cfg(not(windows))]
     let builder = apply_view_isolation(builder, account, app);
@@ -1338,9 +1406,9 @@ fn enable_webview_media(win: &tauri::Webview) {
                 // video sending and calling ("please update your browser").
                 // Turning quirks off lets CHROME_UA through unmodified.
                 settings.set_property("enable-site-specific-quirks", false);
-                // Opt-in inspector for live diagnosis: run `WHATRUST_DEVTOOLS=1
-                // whatrust` and right-click > Inspect Element.
-                if std::env::var_os("WHATRUST_DEVTOOLS").is_some() {
+                // Opt-in inspector for live diagnosis: run `VENWHATSAPP_DEVTOOLS=1
+                // venwhatsapp` and right-click > Inspect Element.
+                if std::env::var_os("VENWHATSAPP_DEVTOOLS").is_some() {
                     settings.set_property("enable-developer-extras", true);
                 }
             }
@@ -1437,7 +1505,7 @@ pub fn native_report(app: &AppHandle, id: &str, action: &str) {
 /// notifications raised in the page itself; one raised from a worker never
 /// reached it, so a v0.6.4 tester got a toast for WhatsApp's test notification
 /// but none for real messages. WebView2's `NotificationReceived` sees those too:
-/// it is turned into a whatRust toast (lock-aware, de-duplicated) instead of
+/// it is turned into a Venwhatsapp toast (lock-aware, de-duplicated) instead of
 /// WebView2's own popup.
 /// Whether a permission request comes from WhatsApp's own origin.
 #[cfg(any(target_os = "windows", test))]
@@ -1747,7 +1815,7 @@ pub fn toggle_privacy_blur(app: &AppHandle) {
 
 /// Toggle the active account window: hide it if visible, otherwise show + focus it.
 /// The "show" path goes through `show_active`, which defers to the lock screen when
-/// the app is locked — so a toggle (e.g. an OS-bound `whatrust --toggle` on Wayland,
+/// the app is locked — so a toggle (e.g. an OS-bound `venwhatsapp --toggle` on Wayland,
 /// where in-process global hotkeys can't fire) can NEVER reveal an account window
 /// while locked. The "hide" path only triggers when an account window is visible,
 /// which cannot happen while locked.
@@ -1837,7 +1905,7 @@ fn open_settings_legacy(app: &AppHandle) {
     }
     match WebviewWindowBuilder::new(app, "settings", WebviewUrl::App("index.html".into()))
         .initialization_script(crate::i18n::init_script())
-        .title(tr("whatRust — Configurações"))
+        .title(tr("Venwhatsapp — Configurações"))
         .inner_size(440.0, 680.0)
         .min_inner_size(440.0, 520.0)
         .decorations(crate::decorations::show(app))
@@ -2219,8 +2287,12 @@ mod tests {
         use super::{new_window_route, NewWindowRoute};
         let route = |u: &str| new_window_route(&u.parse().unwrap());
         assert_eq!(
-            route("https://github.com/karem505/whatRust"),
-            NewWindowRoute::External("https://github.com/karem505/whatRust".parse().unwrap())
+            route("https://github.com/jazbloktq/venwhatsapp-desktop"),
+            NewWindowRoute::External(
+                "https://github.com/jazbloktq/venwhatsapp-desktop"
+                    .parse()
+                    .unwrap()
+            )
         );
         assert!(matches!(route("mailto:a@b.c"), NewWindowRoute::External(_)));
         assert_eq!(

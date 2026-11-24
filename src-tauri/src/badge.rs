@@ -42,13 +42,13 @@ pub fn set(app: &AppHandle, count: u32) {
 mod launcher {
     /// Desktop file id (with `.desktop`) that the dock matches the signal to.
     /// - Flatpak: `<FLATPAK_ID>.desktop`.
-    /// - AppImage: `whatrust.desktop`, the entry `install.sh` writes.
-    /// - Otherwise (.deb): `whatRust.desktop`, named after Tauri's productName.
+    /// - AppImage: `venwhatsapp.desktop`, the desktop entry installed by the package.
+    /// - Otherwise (.deb): `Venwhatsapp.desktop`, named after Tauri's productName.
     pub(super) fn desktop_id(flatpak_id: Option<&str>, appimage: bool) -> String {
         match (flatpak_id, appimage) {
             (Some(id), _) => format!("{id}.desktop"),
-            (None, true) => "whatrust.desktop".to_string(),
-            (None, false) => "whatRust.desktop".to_string(),
+            (None, true) => "venwhatsapp.desktop".to_string(),
+            (None, false) => "Venwhatsapp.desktop".to_string(),
         }
     }
 
@@ -167,18 +167,18 @@ mod launcher {
 
         #[test]
         fn desktop_id_per_install_type() {
-            let id = "io.github.karem505.whatRust";
+            let id = "io.github.jazbloktq.venwhatsapp";
             assert_eq!(desktop_id(Some(id), false), format!("{id}.desktop"));
             assert_eq!(desktop_id(Some(id), true), format!("{id}.desktop"));
-            assert_eq!(desktop_id(None, true), "whatrust.desktop");
-            assert_eq!(desktop_id(None, false), "whatRust.desktop");
+            assert_eq!(desktop_id(None, true), "venwhatsapp.desktop");
+            assert_eq!(desktop_id(None, false), "Venwhatsapp.desktop");
         }
 
         #[test]
         fn object_path_is_valid_and_stable() {
-            let p = object_path("application://whatRust.desktop");
-            assert_eq!(p, object_path("application://whatRust.desktop"));
-            assert_ne!(p, object_path("application://whatrust.desktop"));
+            let p = object_path("application://Venwhatsapp.desktop");
+            assert_eq!(p, object_path("application://Venwhatsapp.desktop"));
+            assert_ne!(p, object_path("application://venwhatsapp.desktop"));
             let tail = p
                 .strip_prefix("/com/canonical/unity/launcherentry/")
                 .unwrap();

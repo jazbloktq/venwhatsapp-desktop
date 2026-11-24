@@ -9,7 +9,7 @@
 //! never silently falls back to a direct connection: the webviews get an
 //! unroutable proxy instead, so the page fails to load.
 //!
-//! whatRust's own Rust code makes one kind of network request: the update check
+//! Venwhatsapp's own Rust code makes one kind of network request: the update check
 //! and download (`updater.rs`, api.github.com and github.com). It reads the same
 //! saved proxy settings through `url_for`, so it is routed the same way, and an
 //! invalid saved proxy stops it instead of letting it connect directly. Notification

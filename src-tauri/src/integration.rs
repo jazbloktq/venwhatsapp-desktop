@@ -297,7 +297,7 @@ pub fn test_notification(window: Webview, app: AppHandle) -> Result<String, Stri
     notify::from_account(
         &app,
         &label,
-        tr("Teste do whatRust").as_ref(),
+        tr("Teste do Venwhatsapp").as_ref(),
         tr("Se você está vendo este aviso, o Windows exibiu o teste.").as_ref(),
         None,
         notify::Source::Test,

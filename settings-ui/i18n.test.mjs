@@ -15,9 +15,9 @@ function check(name, fn) {
   catch (e) { failures++; console.log("  FAIL " + name + "\n       " + e.message.split("\n").join("\n       ")); }
 }
 
-// Text that is the same in both languages, or a proper name.
-const SAME = new Set(["whatRust", "WhatsApp", "OK", "Português (Brasil)", "English", "⇄", "⋮", "⚙",
-  "CmdOrCtrl+Shift+W", "CmdOrCtrl+Shift+B", "Cmd/Ctrl+Shift+W", "Cmd/Ctrl+Shift+B", "whatrust --toggle", "Esc", "SOCKS5", "HTTP", "127.0.0.1", "1080"]);
+// Text that needs no translation, or a proper name.
+const SAME = new Set(["Venwhatsapp", "WhatsApp", "OK", "⇄", "⋮", "⚙",
+  "CmdOrCtrl+Shift+W", "CmdOrCtrl+Shift+B", "Cmd/Ctrl+Shift+W", "Cmd/Ctrl+Shift+B", "venwhatsapp --toggle", "Esc", "SOCKS5", "HTTP", "127.0.0.1", "1080"]);
 
 function visibleTexts(html) {
   html = html.replace(/<script[\s\S]*?<\/script>/g, "").replace(/<style[\s\S]*?<\/style>/g, "")
@@ -31,9 +31,9 @@ function visibleTexts(html) {
   return out;
 }
 
-check("English is the identity for Portuguese and translates known keys", () => {
-  assert.equal(t("Salvar"), "Salvar"); // default language is pt-BR
-  assert.equal(t("Abrir {0}", ["Ana"]), "Abrir Ana");
+check("English is active by default and translates known keys", () => {
+  assert.equal(t("Salvar"), "Save");
+  assert.equal(t("Abrir {0}", ["Ana"]), "Open Ana");
 });
 
 check("placeholders match between Portuguese and English", () => {
@@ -82,10 +82,10 @@ check("strings assigned to the page by the scripts have an English entry", () =>
   assert.deepEqual(missing, []);
 });
 
-check("both language options are offered", () => {
+check("the interface is English-only", () => {
   const html = read("index.html");
-  assert.match(html, /<option value="pt-BR">/);
-  assert.match(html, /<option value="en">/);
+  assert.match(html, /<html lang="en">/);
+  assert.doesNotMatch(html, /id="language"|Português \(Brasil\)/);
 });
 
 if (failures) { console.log(`\n${failures} i18n test(s) failed`); process.exit(1); }

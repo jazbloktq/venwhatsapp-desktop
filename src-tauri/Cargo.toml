@@ -1,8 +1,11 @@
 [package]
-name = "whatrust"
-version = "0.6.16"
+name = "venwhatsapp"
+version = "0.1.0"
 edition = "2021"
 rust-version = "1.90"
+description = "English-only WhatsApp Web desktop client with live message edit and deletion history"
+license = "MIT"
+repository = "https://github.com/jazbloktq/venwhatsapp-desktop"
 
 [profile.release]
 codegen-units = 1
@@ -12,7 +15,7 @@ panic = "abort"
 strip = true
 
 [lib]
-name = "whatrust_lib"
+name = "venwhatsapp_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -53,7 +56,6 @@ windows = { version = "0.62", features = [
   "Win32_UI_Shell",           # SetCurrentProcessExplicitAppUserModelID, ShellExecuteW (open links/files)
   "Win32_UI_Controls_Dialogs", # native per-download Save As dialog
   "Win32_UI_WindowsAndMessaging", # SW_SHOWNORMAL for ShellExecuteW
-  "Win32_Globalization",      # GetUserDefaultLocaleName: default UI language
   "Win32_UI_Input_KeyboardAndMouse", # GetKeyState: Ctrl+Shift+P privacy panel (issue #80)
 ] }
 windows-core = "0.62"

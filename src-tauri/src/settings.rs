@@ -36,8 +36,7 @@ pub struct Settings {
     /// Dock icon brings a hidden window back. Windows and Linux always show the
     /// tray icon, since there it is the only way back to a hidden window.
     pub menu_bar_icon: bool,
-    /// Interface language: `en` or `pt-BR`. Defaults to the OS language
-    /// (Portuguese for a Portuguese system, English otherwise).
+    /// Interface language. Venwhatsapp currently supports English only.
     pub language: String,
     /// Folder downloads are saved to (issue #40). `None` keeps the OS Downloads
     /// folder. Checked when saved and again before each download; a folder that
@@ -76,8 +75,8 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             close_to_tray: true,
-            start_minimized: false,
-            autostart: false,
+            start_minimized: true,
+            autostart: true,
             hotkey_enabled: true,
             hotkey: "CmdOrCtrl+Shift+W".to_string(),
             blur_hotkey_enabled: false,
@@ -271,9 +270,9 @@ fn flatpak_autostart_entry(flatpak_id: &str) -> String {
         "[Desktop Entry]\n\
          Type=Application\n\
          Version=1.0\n\
-         Name=whatRust\n\
-         Comment=Start whatRust minimized\n\
-         Exec=flatpak run --command=whatrust {flatpak_id} --minimized\n\
+         Name=Venwhatsapp\n\
+         Comment=Start Venwhatsapp minimized\n\
+         Exec=flatpak run --command=venwhatsapp {flatpak_id} --minimized\n\
          Icon={flatpak_id}\n\
          Terminal=false\n\
          X-GNOME-Autostart-enabled=true\n\
@@ -494,23 +493,23 @@ mod tests {
     #[cfg(target_os = "linux")]
     #[test]
     fn flatpak_id_validation_blocks_path_and_desktop_entry_injection() {
-        assert!(is_valid_flatpak_id("io.github.karem505.whatRust"));
+        assert!(is_valid_flatpak_id("io.github.jazbloktq.venwhatsapp"));
         assert!(!is_valid_flatpak_id("../../autostart"));
-        assert!(!is_valid_flatpak_id("io.github.karem505.whatRust\nExec=sh"));
-        assert!(!is_valid_flatpak_id("io..whatRust"));
-        assert!(!is_valid_flatpak_id("io.github.505whatRust"));
+        assert!(!is_valid_flatpak_id("io.github.jazbloktq.venwhatsapp\nExec=sh"));
+        assert!(!is_valid_flatpak_id("io..Venwhatsapp"));
+        assert!(!is_valid_flatpak_id("io.github.505Venwhatsapp"));
     }
 
     #[cfg(target_os = "linux")]
     #[test]
     fn flatpak_autostart_entry_reenters_the_sandbox() {
-        let entry = flatpak_autostart_entry("io.github.karem505.whatRust");
+        let entry = flatpak_autostart_entry("io.github.jazbloktq.venwhatsapp");
         assert!(entry.contains(
-            "Exec=flatpak run --command=whatrust io.github.karem505.whatRust --minimized"
+            "Exec=flatpak run --command=venwhatsapp io.github.jazbloktq.venwhatsapp --minimized"
         ));
-        assert!(entry.contains("Icon=io.github.karem505.whatRust"));
-        assert!(entry.contains("X-Flatpak=io.github.karem505.whatRust"));
-        assert!(!entry.contains("Exec=/app/bin/whatrust"));
+        assert!(entry.contains("Icon=io.github.jazbloktq.venwhatsapp"));
+        assert!(entry.contains("X-Flatpak=io.github.jazbloktq.venwhatsapp"));
+        assert!(!entry.contains("Exec=/app/bin/venwhatsapp"));
     }
 
     #[test]
@@ -521,7 +520,8 @@ mod tests {
         // The menu-bar mode is opt-in.
         assert!(!s.menubar_only);
         assert_eq!(s.hotkey, "CmdOrCtrl+Shift+W");
-        assert!(!s.autostart);
+        assert!(s.autostart);
+        assert!(s.start_minimized);
         assert_eq!(s.zoom, 1.0);
         assert!(s.menu_bar_icon);
     }
