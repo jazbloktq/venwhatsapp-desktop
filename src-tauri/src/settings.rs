@@ -1,5 +1,67 @@
 use crate::i18n::trf;
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
+
+/// Default privacy-blur rules shared by the account panel and Settings.
+pub fn privacy_blur_defaults() -> Value {
+    json!({
+        "on": false,
+        "noTransition": false,
+        "unblurHover": false,
+        "notif": true,
+        "idle": { "on": false, "amt": 12, "secs": 60 },
+        "g": {
+            "chat": { "on": false, "amt": 8 },
+            "preview": { "on": true, "amt": 8 },
+            "media": { "on": true, "amt": 12 },
+            "gallery": { "on": true, "amt": 12 },
+            "input": { "on": true, "amt": 6 },
+            "avatars": { "on": false, "amt": 8 },
+            "names": { "on": false, "amt": 8 }
+        }
+    })
+}
+
+/// Keep only known privacy options and clamp values before they reach CSS/UI.
+pub fn sanitize_privacy_blur(value: Value) -> Value {
+    fn merge_known(base: &mut Value, incoming: &Value) {
+        match (base, incoming) {
+            (Value::Object(base), Value::Object(incoming)) => {
+                for (key, target) in base.iter_mut() {
+                    if let Some(source) = incoming.get(key) {
+                        merge_known(target, source);
+                    }
+                }
+            }
+            (target @ Value::Bool(_), Value::Bool(_)) => *target = incoming.clone(),
+            (target @ Value::Number(_), Value::Number(_)) => *target = incoming.clone(),
+            _ => {}
+        }
+    }
+    fn clamp_number(value: &mut Value, min: f64, max: f64) {
+        let number = value.as_f64().unwrap_or(min).clamp(min, max);
+        *value = json!(number);
+    }
+
+    let mut clean = privacy_blur_defaults();
+    merge_known(&mut clean, &value);
+    if let Some(groups) = clean.get_mut("g").and_then(Value::as_object_mut) {
+        for group in groups.values_mut() {
+            if let Some(amount) = group.get_mut("amt") {
+                clamp_number(amount, 1.0, 30.0);
+            }
+        }
+    }
+    if let Some(idle) = clean.get_mut("idle") {
+        if let Some(amount) = idle.get_mut("amt") {
+            clamp_number(amount, 1.0, 30.0);
+        }
+        if let Some(seconds) = idle.get_mut("secs") {
+            clamp_number(seconds, 5.0, 600.0);
+        }
+    }
+    clean
+}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -14,6 +76,12 @@ pub struct Settings {
     /// (Ctrl+Shift+B is the browsers' bookmarks bar) from users who never asked.
     pub blur_hotkey_enabled: bool,
     pub blur_hotkey: String,
+    /// Shared blur rules for all WhatsApp accounts. Existing per-webview rules
+    /// are imported once the privacy script starts in an account window.
+    #[serde(default = "privacy_blur_defaults")]
+    pub privacy_blur: Value,
+    #[serde(default)]
+    pub privacy_blur_configured: bool,
     pub notifications: bool,
     pub notify_when_focused: bool,
     pub notify_active_chat: bool,
@@ -81,6 +149,8 @@ impl Default for Settings {
             hotkey: "CmdOrCtrl+Shift+W".to_string(),
             blur_hotkey_enabled: false,
             blur_hotkey: "CmdOrCtrl+Shift+B".to_string(),
+            privacy_blur: privacy_blur_defaults(),
+            privacy_blur_configured: false,
             notifications: true,
             notify_when_focused: true,
             notify_active_chat: true,
@@ -230,6 +300,7 @@ impl Settings {
         self.download_dir = self.download_dir.filter(|d| !d.trim().is_empty());
         self.title_bar = crate::decorations::sanitize(&self.title_bar);
         self.rendering = sanitize_rendering(&self.rendering);
+        self.privacy_blur = sanitize_privacy_blur(self.privacy_blur);
         // Menu-bar-only mode needs WKWebView's inactive-scheduling policy
         // (macOS 14+). Dropping the flag here means a settings file or an
         // older build can never leave the app in a mode it cannot sustain.

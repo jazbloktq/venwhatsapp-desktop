@@ -28,6 +28,8 @@ const PAGE_COMMANDS: &[&str] = &[
     "switch_account",
     "zoom_step",
     "sync_whatsapp_profile",
+    "sync_privacy_blur_config",
+    "set_privacy_blur_config",
 ];
 /// Commands only the local settings window may use.
 const SETTINGS_COMMANDS: &[&str] = &[

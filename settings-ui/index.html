@@ -169,6 +169,18 @@
               <button type="button" id="record_hotkey" class="secondary">Gravar</button>
             </div>
           </div>
+          <label class="row">
+            <span class="row-text"><span class="row-title">Enable privacy blur shortcut</span>
+              <span class="row-subtitle">Turns privacy blur on or off in every account. Choose what gets blurred in Settings → Security → Privacy blur.</span></span>
+            <input type="checkbox" class="switch" id="blur_hotkey_enabled" />
+          </label>
+          <div class="row">
+            <span class="row-text"><span class="row-title">Keyboard combination</span></span>
+            <div class="hotkey-row">
+              <input type="text" id="blur_hotkey" placeholder="Cmd/Ctrl+Shift+B" aria-label="Privacy blur shortcut" />
+              <button type="button" id="record_blur_hotkey" class="secondary">Record</button>
+            </div>
+          </div>
         </div>
         <p id="hotkey_hint" class="hotkey-hint" hidden></p>
         <p class="group-note">No Linux/Wayland, configure <code>venwhatsapp --toggle</code> nos atalhos do sistema.</p>
@@ -177,22 +189,34 @@
       <section class="group" id="sec-seguranca">
         <h2 class="group-title">Segurança</h2>
 
-        <h3>Desfoque de privacidade</h3>
-        <div class="boxed-list">
-          <label class="row">
-            <span class="row-text"><span class="row-title">Atalho para desfocar</span>
-              <span class="row-subtitle">Liga ou desliga o desfoque em todas as contas. Para escolher os itens desfocados, pressione Ctrl+Shift+P (⌘+Shift+P no Mac) numa janela do WhatsApp.</span></span>
-            <input type="checkbox" class="switch" id="blur_hotkey_enabled" />
-          </label>
-          <div class="row">
-            <span class="row-text"><span class="row-title">Atalho</span></span>
-            <div class="hotkey-row">
-              <input type="text" id="blur_hotkey" placeholder="Cmd/Ctrl+Shift+B" aria-label="Atalho" />
-              <button type="button" id="record_blur_hotkey" class="secondary">Gravar</button>
+        <details class="privacy-disclosure" id="privacy-blur-disclosure">
+          <summary>Privacy blur</summary>
+          <p class="group-note">Choose what is blurred in every account. Changes apply to open WhatsApp windows when you save.</p>
+          <div class="boxed-list privacy-list">
+            <label class="row privacy-option"><span class="row-text"><span class="row-title">Enable privacy blur</span></span><input type="checkbox" class="switch" id="privacy_blur_on" /></label>
+            <label class="row privacy-option"><span class="row-text"><span class="row-title">All messages in chat</span></span><input type="checkbox" class="switch" id="privacy_chat_on" /></label>
+            <div class="privacy-slider-row"><label for="privacy_chat_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_chat_amt" min="1" max="30" step="1" /><output id="privacy_chat_amt_output" for="privacy_chat_amt"></output></div>
+            <label class="row privacy-option"><span class="row-text"><span class="row-title">Last message previews</span></span><input type="checkbox" class="switch" id="privacy_preview_on" /></label>
+            <div class="privacy-slider-row"><label for="privacy_preview_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_preview_amt" min="1" max="30" step="1" /><output id="privacy_preview_amt_output" for="privacy_preview_amt"></output></div>
+            <label class="row privacy-option"><span class="row-text"><span class="row-title">Media previews</span></span><input type="checkbox" class="switch" id="privacy_media_on" /></label>
+            <div class="privacy-slider-row"><label for="privacy_media_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_media_amt" min="1" max="30" step="1" /><output id="privacy_media_amt_output" for="privacy_media_amt"></output></div>
+            <label class="row privacy-option"><span class="row-text"><span class="row-title">Media gallery</span></span><input type="checkbox" class="switch" id="privacy_gallery_on" /></label>
+            <div class="privacy-slider-row"><label for="privacy_gallery_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_gallery_amt" min="1" max="30" step="1" /><output id="privacy_gallery_amt_output" for="privacy_gallery_amt"></output></div>
+            <label class="row privacy-option"><span class="row-text"><span class="row-title">Text input</span></span><input type="checkbox" class="switch" id="privacy_input_on" /></label>
+            <label class="row privacy-option"><span class="row-text"><span class="row-title">Profile pictures</span></span><input type="checkbox" class="switch" id="privacy_avatars_on" /></label>
+            <div class="privacy-slider-row"><label for="privacy_avatars_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_avatars_amt" min="1" max="30" step="1" /><output id="privacy_avatars_amt_output" for="privacy_avatars_amt"></output></div>
+            <label class="row privacy-option"><span class="row-text"><span class="row-title">Group and contact names</span></span><input type="checkbox" class="switch" id="privacy_names_on" /></label>
+            <div class="privacy-slider-row"><label for="privacy_names_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_names_amt" min="1" max="30" step="1" /><output id="privacy_names_amt_output" for="privacy_names_amt"></output></div>
+            <label class="row privacy-option"><span class="row-text"><span class="row-title">Hide notification contents</span></span><input type="checkbox" class="switch" id="privacy_notif" /></label>
+            <label class="row privacy-option"><span class="row-text"><span class="row-title">No transition delay</span></span><input type="checkbox" class="switch" id="privacy_no_transition" /></label>
+            <label class="row privacy-option"><span class="row-text"><span class="row-title">Unblur everything when hovering over the app window</span></span><input type="checkbox" class="switch" id="privacy_unblur_hover" /></label>
+            <label class="row privacy-option"><span class="row-text"><span class="row-title">Blur everything when idle</span></span><input type="checkbox" class="switch" id="privacy_idle_on" /></label>
+            <div id="privacy_idle_controls" hidden>
+              <div class="privacy-slider-row"><label for="privacy_idle_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_idle_amt" min="1" max="30" step="1" /><output id="privacy_idle_amt_output" for="privacy_idle_amt"></output></div>
+              <div class="privacy-slider-row"><label for="privacy_idle_secs">Idle time</label><input class="privacy-range" type="range" id="privacy_idle_secs" min="5" max="600" step="5" /><output id="privacy_idle_secs_output" for="privacy_idle_secs"></output></div>
             </div>
           </div>
-        </div>
-        <p class="group-note">O desfoque é aplicado localmente nas janelas do WhatsApp.</p>
+        </details>
 
         <div id="lock-disabled">
           <div class="boxed-list">

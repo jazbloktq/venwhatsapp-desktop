@@ -1,5 +1,6 @@
 const invoke = window.__TAURI__.core.invoke;
 const BOOLS = ["close_to_tray", "start_minimized", "autostart", "notifications", "hotkey_enabled", "blur_hotkey_enabled", "menu_bar_icon", "menubar_only", "hide_dock_icon", "notify_when_focused", "notify_active_chat", "respect_muted", "single_window", "auto_update_check", "auto_update_install", "hide_app_banner"];
+const PRIVACY_GROUPS = ["chat", "preview", "media", "gallery", "input", "avatars", "names"];
 const ZOOM_DEFAULT = 1;
 const SINGLE_WINDOW_SUBTITLE = "Uma janela com um seletor de contas; as contas ocultas continuam conectadas. Requer reiniciar o Venwhatsapp.";
 
@@ -62,6 +63,62 @@ function showDownloadDir() {
 function showIcon(custom) {
   document.getElementById("icon_subtitle").textContent = custom ? "Personalizado" : "Padrão";
   document.getElementById("reset_icon").disabled = !custom;
+}
+
+function updatePrivacyRange(input) {
+  const output = document.getElementById(input.id + "_output");
+  if (output) output.textContent = input.id === "privacy_idle_secs" ? input.value + " s" : input.value + " px";
+}
+
+function loadPrivacyBlur(config = {}) {
+  const groupConfig = config.g || {};
+  document.getElementById("privacy_blur_on").checked = !!config.on;
+  document.getElementById("privacy_notif").checked = config.notif !== false;
+  document.getElementById("privacy_no_transition").checked = !!config.noTransition;
+  document.getElementById("privacy_unblur_hover").checked = !!config.unblurHover;
+  for (const group of PRIVACY_GROUPS) {
+    const value = groupConfig[group] || {};
+    const enabled = document.getElementById("privacy_" + group + "_on");
+    if (enabled) enabled.checked = !!value.on;
+    const amount = document.getElementById("privacy_" + group + "_amt");
+    if (amount) {
+      amount.value = String(value.amt || 8);
+      updatePrivacyRange(amount);
+    }
+  }
+  const idle = config.idle || {};
+  document.getElementById("privacy_idle_on").checked = !!idle.on;
+  document.getElementById("privacy_idle_amt").value = String(idle.amt || 12);
+  document.getElementById("privacy_idle_secs").value = String(idle.secs || 60);
+  updatePrivacyRange(document.getElementById("privacy_idle_amt"));
+  updatePrivacyRange(document.getElementById("privacy_idle_secs"));
+  syncPrivacyBlurControls();
+}
+
+function readPrivacyBlur() {
+  const groups = {};
+  for (const group of PRIVACY_GROUPS) {
+    const entry = { on: document.getElementById("privacy_" + group + "_on").checked };
+    const amount = document.getElementById("privacy_" + group + "_amt");
+    if (amount) entry.amt = Number(amount.value);
+    groups[group] = entry;
+  }
+  return {
+    on: document.getElementById("privacy_blur_on").checked,
+    notif: document.getElementById("privacy_notif").checked,
+    noTransition: document.getElementById("privacy_no_transition").checked,
+    unblurHover: document.getElementById("privacy_unblur_hover").checked,
+    idle: {
+      on: document.getElementById("privacy_idle_on").checked,
+      amt: Number(document.getElementById("privacy_idle_amt").value),
+      secs: Number(document.getElementById("privacy_idle_secs").value),
+    },
+    g: groups,
+  };
+}
+
+function syncPrivacyBlurControls() {
+  document.getElementById("privacy_idle_controls").hidden = !document.getElementById("privacy_idle_on").checked;
 }
 
 function flash(message, ms = 4000) {
@@ -152,6 +209,7 @@ async function load() {
   }
   document.getElementById("hotkey").value = window.HotkeyFmt.toDisplay(s.hotkey || "CmdOrCtrl+Shift+W");
   document.getElementById("blur_hotkey").value = window.HotkeyFmt.toDisplay(s.blur_hotkey || "CmdOrCtrl+Shift+B");
+  loadPrivacyBlur(s.privacy_blur || {});
   selectNearestZoom(Number.isFinite(s.zoom) ? s.zoom : ZOOM_DEFAULT);
   s.language = "en";
   if (I18n.lang() !== "en") I18n.setLang("en");
@@ -212,6 +270,8 @@ async function save() {
   const hk = window.HotkeyFmt.fromDisplay(document.getElementById("hotkey").value.trim());
   s.hotkey = hk || "CmdOrCtrl+Shift+W";
   s.blur_hotkey = window.HotkeyFmt.fromDisplay(document.getElementById("blur_hotkey").value.trim()) || "CmdOrCtrl+Shift+B";
+  s.privacy_blur = readPrivacyBlur();
+  s.privacy_blur_configured = true;
   s.zoom = parseFloat(document.getElementById("zoom").value) || ZOOM_DEFAULT;
   s.title_bar = document.getElementById("title_bar").value || "auto";
   s.rendering = document.getElementById("rendering").value || "auto";
@@ -439,6 +499,8 @@ window.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById("record_hotkey").addEventListener("click", () => toggleRecording("hotkey", "record_hotkey"));
   document.getElementById("record_blur_hotkey").addEventListener("click", () => toggleRecording("blur_hotkey", "record_blur_hotkey"));
+  document.querySelectorAll(".privacy-range").forEach((input) => input.addEventListener("input", () => updatePrivacyRange(input)));
+  document.getElementById("privacy_idle_on").addEventListener("change", syncPrivacyBlurControls);
   document.getElementById("choose_download_dir").addEventListener("click", chooseDownloadDir);
   document.getElementById("reset_download_dir").addEventListener("click", resetDownloadDir);
   document.getElementById("choose_icon").addEventListener("click", chooseIcon);

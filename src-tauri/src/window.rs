@@ -1806,9 +1806,30 @@ pub fn toggle_decision(active_visible: Option<bool>) -> ToggleAct {
 
 /// Flip the privacy blur in every account webview (not settings/lock).
 pub fn toggle_privacy_blur(app: &AppHandle) {
+    let mut settings = crate::settings::load(app);
+    let on = settings
+        .privacy_blur
+        .get("on")
+        .and_then(serde_json::Value::as_bool)
+        .unwrap_or(false);
+    settings.privacy_blur["on"] = serde_json::Value::Bool(!on);
+    settings.privacy_blur_configured = true;
+    if let Err(error) = crate::settings::save(app, &settings) {
+        crate::dlog::log(&format!("privacy blur save failed: {error}"));
+        return;
+    }
+    apply_privacy_blur_config(app, &settings.privacy_blur);
+}
+
+/// Apply shared privacy-blur rules to all live account webviews.
+pub(crate) fn apply_privacy_blur_config(app: &AppHandle, config: &serde_json::Value) {
+    let Ok(config) = serde_json::to_string(config) else {
+        return;
+    };
+    let script = format!("window.__whatrustPrivacy&&window.__whatrustPrivacy.configure({config})");
     for (label, view) in app.webviews() {
         if crate::accounts::id_from_label(&label).is_some() {
-            let _ = view.eval("window.__whatrustPrivacy&&window.__whatrustPrivacy.toggle()");
+            let _ = view.eval(&script);
         }
     }
 }

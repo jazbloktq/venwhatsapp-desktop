@@ -29,6 +29,8 @@ fn main() {
             "switcher_accounts",
             "switch_account",
             "zoom_step",
+            "sync_privacy_blur_config",
+            "set_privacy_blur_config",
             // settings window
             "get_settings",
             "set_settings",

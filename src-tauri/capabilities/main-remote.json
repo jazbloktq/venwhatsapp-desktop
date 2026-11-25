@@ -17,6 +17,8 @@
     "allow-switcher-accounts",
     "allow-switch-account",
     "allow-zoom-step",
+    "allow-sync-privacy-blur-config",
+    "allow-set-privacy-blur-config",
     "notification:allow-is-permission-granted",
     "allow-integration-state",
     "allow-report-integration",

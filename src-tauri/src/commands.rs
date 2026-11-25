@@ -238,9 +238,47 @@ pub fn set_settings(
     }
     // The icon is only switched through choose_app_icon / reset_app_icon.
     settings.custom_icon = stored.custom_icon;
+    settings.privacy_blur_configured = true;
     crate::proxy::validate(&mut settings)?;
     crate::settings::save(&app, &settings).map_err(|e| e.to_string())?;
+    crate::window::apply_privacy_blur_config(&app, &settings.privacy_blur);
     Ok(crate::settings::apply(&app, &settings))
+}
+
+/// Import the first existing account's local blur settings, then return the
+/// shared app setting so every account can use the same rules.
+#[tauri::command]
+pub fn sync_privacy_blur_config(
+    window: tauri::Webview,
+    app: tauri::AppHandle,
+    config: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    crate::integration::remote(&window)?;
+    lock::require_unlocked(&app)?;
+    let mut settings = crate::settings::load(&app);
+    if !settings.privacy_blur_configured {
+        settings.privacy_blur = crate::settings::sanitize_privacy_blur(config);
+        settings.privacy_blur_configured = true;
+        crate::settings::save(&app, &settings).map_err(|e| e.to_string())?;
+    }
+    Ok(settings.privacy_blur)
+}
+
+/// Save a change made in the WhatsApp blur panel and keep every account in sync.
+#[tauri::command]
+pub fn set_privacy_blur_config(
+    window: tauri::Webview,
+    app: tauri::AppHandle,
+    config: serde_json::Value,
+) -> Result<(), String> {
+    crate::integration::remote(&window)?;
+    lock::require_unlocked(&app)?;
+    let mut settings = crate::settings::load(&app);
+    settings.privacy_blur = crate::settings::sanitize_privacy_blur(config);
+    settings.privacy_blur_configured = true;
+    crate::settings::save(&app, &settings).map_err(|e| e.to_string())?;
+    crate::window::apply_privacy_blur_config(&app, &settings.privacy_blur);
+    Ok(())
 }
 
 /// Relaunch the app (the proxy applies when webviews are created). Local

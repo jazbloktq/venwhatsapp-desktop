@@ -232,6 +232,8 @@ pub fn run() {
             commands::zoom_step,
             commands::get_settings,
             commands::set_settings,
+            commands::sync_privacy_blur_config,
+            commands::set_privacy_blur_config,
             commands::open_settings,
             commands::pick_download_dir,
             commands::choose_app_icon,

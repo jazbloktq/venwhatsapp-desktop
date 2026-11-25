@@ -30,7 +30,7 @@
       avatars: { on: false, amt: 8 }, names: { on: false, amt: 8 }
     }
   };
-  var cfg = load(), idleTimer = 0, styleEl, panel, panelRoot, syncs = [];
+  var cfg = load(), idleTimer = 0, nativeSyncTimer = 0, styleEl, panel, panelRoot, syncs = [];
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
   function merge(base, over) {
@@ -61,12 +61,22 @@
       out.push("html[data-wr-idle='on'] #app{filter:blur(" + num(cfg.idle.amt, 1, 40) + "px)!important}");
     return out.join("\n");
   }
-  function apply() {
+  function syncToNative() {
+    var t = window.__TAURI__;
+    if (t && t.core && t.core.invoke) {
+      clearTimeout(nativeSyncTimer);
+      nativeSyncTimer = setTimeout(function () {
+        t.core.invoke("set_privacy_blur_config", { config: cfg }).catch(function () {});
+      }, 140);
+    }
+  }
+  function apply(syncNative) {
     var root = document.documentElement;
     if (!styleEl) { styleEl = document.createElement("style"); styleEl.id = STYLE_ID; (document.head || root).appendChild(styleEl); }
     styleEl.textContent = css();
     root.setAttribute("data-wr-privacy", cfg.on ? "on" : "off");
     armIdle(); save();
+    if (syncNative !== false) syncToNative();
   }
 
   // Idle blur: any input resets the timer; after `secs` without input, blur #app.
@@ -147,9 +157,16 @@
   }
   function togglePanel() { if (!panel) build(); panel.hidden = !panel.hidden; }
 
+  function configure(next) {
+    cfg = merge(clone(DEFAULTS), next);
+    syncs.forEach(function (f) { f(); });
+    apply(false);
+  }
+
   window.__whatrustPrivacy = {
     toggle: function () { cfg.on = !cfg.on; apply(); syncs.forEach(function (f) { f(); }); },
     panel: togglePanel,
+    configure: configure,
     // Native notifications (bridge.js) go through here first. While the blur is
     // on they must not leak what the page hides: the sender name, the message
     // and the sender's photo follow the matching groups.
@@ -171,7 +188,14 @@
     if (!(e.metaKey || e.ctrlKey) || !e.shiftKey || e.altKey) return;
     if (e.code === "KeyP") { e.preventDefault(); e.stopPropagation(); togglePanel(); }
   }, true);
-  function init() { build(); apply(); }
+  function init() {
+    build();
+    apply(false);
+    var t = window.__TAURI__;
+    if (t && t.core && t.core.invoke) {
+      t.core.invoke("sync_privacy_blur_config", { config: cfg }).then(configure).catch(function () {});
+    }
+  }
   // WebView2 runs init scripts before the parser creates <html>, so
   // documentElement can still be null here: waiting only on a non-null
   // documentElement skipped init() for good and the saved blur never applied
