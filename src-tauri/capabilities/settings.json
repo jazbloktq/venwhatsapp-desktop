@@ -29,6 +29,7 @@
     "allow-get-update-status",
     "allow-check-for-updates",
     "allow-install-update",
+    "allow-reinstall-latest-release",
     "allow-restart-to-update",
     "allow-open-release-page",
     "allow-open-app-panel",

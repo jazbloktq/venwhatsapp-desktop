@@ -289,6 +289,21 @@ pub fn install_update(window: tauri::Webview, app: tauri::AppHandle) -> Result<(
     Ok(())
 }
 
+/// Download and reinstall the latest verified GitHub release, including the
+/// version already installed.
+#[tauri::command]
+pub fn reinstall_latest_release(
+    window: tauri::Webview,
+    app: tauri::AppHandle,
+) -> Result<(), String> {
+    if is_remote(&window) {
+        return Err("forbidden".into());
+    }
+    lock::require_unlocked(&app)?;
+    crate::update_service::reinstall_latest(&app);
+    Ok(())
+}
+
 /// "Restart now" after an update replaced the app in place.
 #[tauri::command]
 pub fn restart_to_update(window: tauri::Webview, app: tauri::AppHandle) -> Result<(), String> {

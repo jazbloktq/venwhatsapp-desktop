@@ -356,11 +356,11 @@ fn finish(app: &AppHandle, rel: &Release, outcome: Outcome, auto: bool) {
 
 /// Download, verify and (unless `auto` on a type that restarts the app) apply
 /// the release found by the last check.
-fn run_install(app: &AppHandle, auto: bool) {
+fn run_install(app: &AppHandle, auto: bool, force: bool) {
     let Some(rel) = crate::lock::guard(status()).latest.clone() else {
         return;
     };
-    if rel.version <= updater::current_version() || BUSY.swap(true, Ordering::SeqCst) {
+    if (!force && rel.version <= updater::current_version()) || BUSY.swap(true, Ordering::SeqCst) {
         return;
     }
     set(|s| {
@@ -441,7 +441,42 @@ pub fn install_now(app: &AppHandle) {
                 apply_staged(&app, &rel, staged, false)
             }
             Some(_) => {}
-            None => run_install(&app, false),
+            None => run_install(&app, false, false),
+        }
+    });
+}
+
+/// Fetch and reinstall the latest GitHub release even when it matches the
+/// installed version. The normal checksum and install-method safeguards still
+/// run through the regular update pipeline.
+pub fn reinstall_latest(app: &AppHandle) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        if BUSY.swap(true, Ordering::SeqCst) {
+            return;
+        }
+        set(|s| {
+            s.state = "checking";
+            s.error.clear();
+        });
+        publish(&app);
+        let result = updater::Net::from_settings(&crate::settings::load(&app))
+            .and_then(|net| updater::fetch_latest(&net));
+        match result {
+            Ok(release) => {
+                set(|s| {
+                    s.state = if release.version > updater::current_version() {
+                        "available"
+                    } else {
+                        "current"
+                    };
+                    s.latest = Some(release);
+                });
+                BUSY.store(false, Ordering::SeqCst);
+                publish(&app);
+                run_install(&app, false, true);
+            }
+            Err(error) => fail(&app, error),
         }
     });
 }
@@ -525,7 +560,7 @@ pub fn start(app: &AppHandle) {
                     if let Some(rel) = check(&app) {
                         announce(&app, &rel);
                         if s.auto_update_install && method().auto_install_default() {
-                            run_install(&app, true);
+                            run_install(&app, true, false);
                         }
                     }
                 }

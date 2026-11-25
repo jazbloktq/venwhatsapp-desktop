@@ -38,6 +38,7 @@
     $("upd_last").textContent = when(s.lastCheck);
     $("auto_update_install_subtitle").textContent = autoInstallNote(m);
     $("upd_check").disabled = ["checking", "downloading", "installing", "handoff"].includes(s.state);
+    $("upd_reinstall").disabled = ["checking", "downloading", "installing", "handoff", "staged", "ready"].includes(s.state);
 
     const v = s.latest ? s.latest.version : "";
     let title = "";
@@ -166,6 +167,7 @@
 
   window.addEventListener("DOMContentLoaded", () => {
     $("upd_check").addEventListener("click", () => act("check_for_updates"));
+    $("upd_reinstall").addEventListener("click", () => act("reinstall_latest_release"));
     $("upd_install").addEventListener("click", () => act("install_update"));
     $("upd_apply").addEventListener("click", () => act("install_update"));
     $("upd_restart").addEventListener("click", () => act("restart_to_update"));

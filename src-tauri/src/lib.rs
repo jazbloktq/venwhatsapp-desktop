@@ -257,6 +257,7 @@ pub fn run() {
             commands::get_update_status,
             commands::check_for_updates,
             commands::install_update,
+            commands::reinstall_latest_release,
             commands::restart_to_update,
             commands::open_release_page,
             commands::unlock_password,

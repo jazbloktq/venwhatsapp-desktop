@@ -21,10 +21,11 @@
     accountButton.title=own ? L("Conta: ","Account: ")+own.name+L(" — Trocar conta"," — Switch account") : L("Trocar conta do WhatsApp","Switch WhatsApp account");
     gear.setAttribute("aria-label",L("Configurações do Venwhatsapp","Venwhatsapp settings"));gear.title=L("Configurações do Venwhatsapp","Venwhatsapp settings");menu.setAttribute("aria-label",L("Contas do Venwhatsapp","Venwhatsapp accounts"));
     menu.replaceChildren();
-    var title=document.createElement("h2");title.textContent=L("Suas contas","Your accounts");menu.appendChild(title);
+    var heading=document.createElement("div");heading.className="menu-heading";
+    var title=document.createElement("h2");title.textContent=L("Suas contas","Your accounts");heading.appendChild(title);
+    var close=button("×",function(){menu.close();});close.className="menu-close";close.setAttribute("aria-label",L("Fechar","Close"));close.title=L("Fechar","Close");close.dataset.item="close";heading.appendChild(close);menu.appendChild(heading);
     state.accounts.forEach(function(a){var b=button(a.name+(a.unread?" · "+a.unread+L(" conversas não lidas"," unread chats"):""),function(){menu.close();call("switch_account",{id:a.id});});b.setAttribute("aria-current",String(a.id===state.current_id));b.dataset.item=a.id;menu.appendChild(b);});
     var manage=button(L("Gerenciar contas e configurações","Manage accounts and settings"),openPanel);manage.dataset.item="manage";menu.appendChild(manage);
-    var close=button(L("Fechar","Close"),function(){menu.close();});close.dataset.item="close";menu.appendChild(close);
     status=document.createElement("p");status.setAttribute("role","status");status.textContent=own?L("Conta atual: ","Current account: ")+own.name:L("Escolha uma conta","Choose an account");menu.appendChild(status);
     if(menu.open)positionMenu();
     if(keepFocus){var restore=Array.from(menu.querySelectorAll("button")).find(function(b){return b.dataset.item===focusKey;})||menu.querySelector("button");if(restore)restore.focus();}
@@ -50,7 +51,9 @@
       dialog{color-scheme:light dark;color:light-dark(#0a0a0a,#fafafa);background:light-dark(#fff,#232626);border:1px solid #8882;border-radius:8px;box-shadow:0 2px 12px #0005;width:320px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow:auto;padding:12px 8px;inset:auto;margin:0;scrollbar-width:thin;scrollbar-color:rgba(134,150,160,.45) transparent}
       dialog::-webkit-scrollbar{width:8px}dialog::-webkit-scrollbar-track{background:transparent}dialog::-webkit-scrollbar-thumb{background-color:rgba(134,150,160,.45);border:2px solid transparent;border-radius:4px;background-clip:padding-box}
       dialog::backdrop{background:transparent}dialog button{overflow-wrap:anywhere;display:block;width:100%;text-align:left;margin:5px 0;padding:10px 12px;border-radius:8px}
-      h2{font-size:16px;font-weight:600;margin:4px 12px 10px}p{overflow-wrap:anywhere;font-size:12px;opacity:.65;margin:12px 12px 4px}dialog [aria-current=true]{background:#8696a01f;font-weight:600}
+      .menu-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 4px 8px;padding:0 2px 8px;border-bottom:1px solid light-dark(#e9ebeb,#353a3a)}
+      h2{font-size:16px;font-weight:600;margin:4px 8px 2px}.menu-close{display:grid!important;place-items:center;width:28px;height:28px;flex:0 0 28px;margin:0!important;padding:0!important;border-radius:50%!important;text-align:center!important;font-size:20px;line-height:1;color:light-dark(#626262,#a1a5a5)}.menu-close:hover{background:light-dark(#00000010,#ffffff18)}
+      p{overflow-wrap:anywhere;font-size:12px;opacity:.65;margin:12px 12px 4px}dialog [aria-current=true]{background:#8696a01f;font-weight:600}
     `;
     var bar=document.createElement("div");bar.className="bar";
     accountButton=button("Contas",function(){draw();if(!menu.open)menu.showModal();positionMenu();accountButton.setAttribute("aria-expanded","true");var b=menu.querySelector("button");if(b)b.focus();});accountButton.className="account";accountButton.textContent="";

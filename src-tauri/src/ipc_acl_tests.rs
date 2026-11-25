@@ -56,6 +56,7 @@ const SETTINGS_COMMANDS: &[&str] = &[
     "get_update_status",
     "check_for_updates",
     "install_update",
+    "reinstall_latest_release",
     "restart_to_update",
     "open_release_page",
 ];

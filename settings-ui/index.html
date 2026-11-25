@@ -169,9 +169,19 @@
               <button type="button" id="record_hotkey" class="secondary">Gravar</button>
             </div>
           </div>
+        </div>
+        <p id="hotkey_hint" class="hotkey-hint" hidden></p>
+        <p class="group-note">No Linux/Wayland, configure <code>venwhatsapp --toggle</code> nos atalhos do sistema.</p>
+      </section>
+
+      <section class="group" id="sec-seguranca">
+        <h2 class="group-title">Segurança</h2>
+
+        <h3>Desfoque de privacidade</h3>
+        <div class="boxed-list">
           <label class="row">
             <span class="row-text"><span class="row-title">Atalho para desfocar</span>
-              <span class="row-subtitle">Liga ou desliga o desfoque de privacidade em todas as contas. Para escolher o que é desfocado, pressione Ctrl+Shift+P (⌘+Shift+P no Mac) numa janela do WhatsApp.</span></span>
+              <span class="row-subtitle">Liga ou desliga o desfoque em todas as contas. Para escolher os itens desfocados, pressione Ctrl+Shift+P (⌘+Shift+P no Mac) numa janela do WhatsApp.</span></span>
             <input type="checkbox" class="switch" id="blur_hotkey_enabled" />
           </label>
           <div class="row">
@@ -182,12 +192,7 @@
             </div>
           </div>
         </div>
-        <p id="hotkey_hint" class="hotkey-hint" hidden></p>
-        <p class="group-note">No Linux/Wayland, configure <code>venwhatsapp --toggle</code> nos atalhos do sistema.</p>
-      </section>
-
-      <section class="group" id="sec-seguranca">
-        <h2 class="group-title">Segurança</h2>
+        <p class="group-note">O desfoque é aplicado localmente nas janelas do WhatsApp.</p>
 
         <div id="lock-disabled">
           <div class="boxed-list">
@@ -256,6 +261,11 @@
           </label>
         </div>
         <div class="boxed-list">
+          <div class="row">
+            <span class="row-text"><span class="row-title">Reinstalar pelo GitHub</span>
+              <span class="row-subtitle">Baixa e verifica a versão mais recente publicada, mesmo que seja a mesma versão que já está instalada.</span></span>
+            <button type="button" id="upd_reinstall" class="secondary">Reinstalar</button>
+          </div>
           <div class="row">
             <span class="row-text"><span class="row-title">Versão instalada</span>
               <span class="row-subtitle" id="upd_current"></span></span>

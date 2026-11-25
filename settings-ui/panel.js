@@ -5,7 +5,7 @@
   let dirty=false, diagnosticsBusy=false, timer;
   document.querySelector(".prefs").addEventListener("input",e=>{if(e.target.id!=="new_account_name")dirty=true;});
   document.getElementById("save").addEventListener("click",()=>{setTimeout(()=>{if(/^(Alterações salvas|Changes saved)/.test(document.getElementById("note").textContent))dirty=false;},400);});
-  async function close(){if(dirty && !await Dlg.confirm("As alterações ainda não foram salvas.",{title:"Voltar sem salvar?",okLabel:"Voltar"}))return;await invoke("close_app_panel");}
+  async function close(){if(dirty && !await Dlg.confirm("As alterações ainda não foram salvas.",{title:"Voltar sem salvar?",okLabel:"Voltar"}))return;document.documentElement.classList.remove("panel-open");await new Promise(resolve=>setTimeout(resolve,220));await invoke("close_app_panel");}
   back.onclick=close;
   document.addEventListener("keydown",e=>{if(e.key==="Escape" && !document.querySelector('.dlg-backdrop,dialog[open],.account-actions[data-open=true]') && !e.defaultPrevented){e.preventDefault();close();}});
   const names={pending:"Aguardando envio",submitted:"Enviada ao Windows; exibição não confirmada",failed:"Falha no envio",suppressed:"Não enviada",activated:"Aviso aberto",dismissed:"Aviso encerrado"};
