@@ -395,6 +395,7 @@ pub fn set_account_photo(
     }
     crate::accountphoto::set(&app, &id, &png)?;
     crate::appicon::apply_account(&app, &id);
+    crate::integration::broadcast(&app);
     Ok(())
 }
 
@@ -410,6 +411,7 @@ pub fn remove_account_photo(
     lock::require_unlocked(&app)?;
     crate::accountphoto::clear(&app, &id);
     crate::appicon::apply_account(&app, &id);
+    crate::integration::broadcast(&app);
     Ok(())
 }
 
@@ -479,8 +481,11 @@ pub struct AccountView {
     pub open: bool,
     pub is_default: bool,
     pub detached: bool,
-    /// Profile photo as a `data:` URL, when the user picked one.
+    pub name_customized: bool,
+    /// Profile photo as a `data:` URL. A user-selected photo takes precedence
+    /// over the photo synced from WhatsApp.
     pub photo: Option<String>,
+    pub custom_photo: bool,
 }
 
 fn account_views(app: &tauri::AppHandle) -> Vec<AccountView> {
@@ -502,6 +507,8 @@ fn account_views(app: &tauri::AppHandle) -> Vec<AccountView> {
                     .is_some_and(|v| v.window().label().starts_with("detached-")),
             is_default: accounts::startup_account(&f).is_some_and(|startup| startup.id == a.id),
             photo: crate::accountphoto::data_url(app, &a.id),
+            custom_photo: crate::accountphoto::has_custom(app, &a.id),
+            name_customized: a.name_customized,
         })
         .collect();
     views.sort_by_key(|v| v.order);
@@ -708,6 +715,7 @@ pub async fn remove_account(
     }
     accounts::delete_profile(&app, &removed.id);
     crate::accountphoto::clear(&app, &removed.id);
+    crate::accountphoto::clear_whatsapp_profile(&app, &removed.id);
 
     // If the removed account was the active one, point at a surviving account
     // so toggle/show don't target a window that no longer exists. (On Windows
@@ -764,6 +772,44 @@ pub async fn rename_account(
             || crate::sessions::selected(&app, w.window().label()).as_deref() == Some(w.label());
         if visible_account {
             let _ = w.window().set_title(&format!("Venwhatsapp — {name}"));
+        }
+    }
+    crate::tray::rebuild_menu(&app);
+    crate::integration::broadcast(&app);
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn use_whatsapp_profile_name(
+    window: tauri::Webview,
+    app: tauri::AppHandle,
+    id: String,
+) -> Result<(), String> {
+    if is_remote(&window) {
+        return Err("forbidden".into());
+    }
+    lock::require_unlocked(&app)?;
+    let _guard = accounts::lock_mutations();
+    let mut f = accounts::load(&app);
+    accounts::use_whatsapp_name(&mut f, &id)?;
+    accounts::save(&app, &f).map_err(|e| e.to_string())?;
+    let name = f
+        .accounts
+        .iter()
+        .find(|account| account.id == id)
+        .map(|account| account.name.clone())
+        .ok_or_else(|| "unknown account".to_owned())?;
+
+    if let Some(view) = app.get_webview(&accounts::window_label(&id)) {
+        #[cfg(windows)]
+        let visible =
+            crate::sessions::selected(&app, view.window().label()).as_deref() == Some(view.label());
+        #[cfg(not(windows))]
+        let visible = !crate::sessions::enabled()
+            || crate::sessions::selected(&app, view.window().label()).as_deref()
+                == Some(view.label());
+        if visible {
+            let _ = view.window().set_title(&format!("Venwhatsapp — {name}"));
         }
     }
     crate::tray::rebuild_menu(&app);

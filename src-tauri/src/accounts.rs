@@ -27,6 +27,12 @@ pub fn lock_mutations() -> std::sync::MutexGuard<'static, ()> {
 pub struct Account {
     pub id: String,
     pub name: String,
+    /// Last name reported by the linked WhatsApp profile. `name` follows this
+    /// automatically until the user chooses a custom account name.
+    #[serde(default)]
+    pub whatsapp_name: Option<String>,
+    #[serde(default)]
+    pub name_customized: bool,
     pub order: u32,
     #[serde(default)]
     pub store_uuid: Option<[u8; 16]>,
@@ -50,6 +56,8 @@ impl Default for AccountsFile {
             accounts: vec![Account {
                 id: "default".to_string(),
                 name: "WhatsApp".to_string(),
+                whatsapp_name: None,
+                name_customized: false,
                 order: 0,
                 store_uuid: None,
             }],
@@ -77,6 +85,8 @@ pub fn add(f: &mut AccountsFile, name: &str) -> Account {
     let acct = Account {
         id,
         name: name.to_string(),
+        whatsapp_name: None,
+        name_customized: false,
         order,
         store_uuid: Some(gen_store_uuid()),
     };
@@ -122,6 +132,39 @@ pub fn rename(f: &mut AccountsFile, id: &str, name: &str) -> Result<(), String> 
         return Err(trf("Conta não encontrada: {0}", &[&id]));
     };
     acct.name = name.to_string();
+    acct.name_customized = true;
+    Ok(())
+}
+
+/// Save a name reported by WhatsApp, updating the visible name unless the user
+/// has explicitly customized it.
+pub fn sync_whatsapp_name(
+    f: &mut AccountsFile,
+    id: &str,
+    profile_name: &str,
+) -> Result<bool, String> {
+    let Some(acct) = f.accounts.iter_mut().find(|a| a.id == id) else {
+        return Err(trf("Conta não encontrada: {0}", &[&id]));
+    };
+    let profile_name = profile_name.trim();
+    let mut changed = acct.whatsapp_name.as_deref() != Some(profile_name);
+    acct.whatsapp_name = Some(profile_name.to_owned());
+    if !acct.name_customized && acct.name != profile_name {
+        acct.name = profile_name.to_owned();
+        changed = true;
+    }
+    Ok(changed)
+}
+
+/// Return an account to its WhatsApp profile name after a manual rename.
+pub fn use_whatsapp_name(f: &mut AccountsFile, id: &str) -> Result<(), String> {
+    let Some(acct) = f.accounts.iter_mut().find(|a| a.id == id) else {
+        return Err(trf("Conta não encontrada: {0}", &[&id]));
+    };
+    acct.name_customized = false;
+    if let Some(name) = &acct.whatsapp_name {
+        acct.name = name.clone();
+    }
     Ok(())
 }
 

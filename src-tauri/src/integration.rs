@@ -48,6 +48,7 @@ pub fn remote(v: &Webview) -> Result<(), String> {
 pub struct DisplayAccount {
     pub id: String,
     pub name: String,
+    pub photo: Option<String>,
     pub unread: u32,
     pub detached: bool,
     pub is_default: bool,
@@ -62,6 +63,7 @@ pub fn display_accounts(app: &AppHandle) -> Vec<DisplayAccount> {
         .map(|a| DisplayAccount {
             id: a.id.clone(),
             name: a.name,
+            photo: crate::accountphoto::data_url(app, &a.id),
             unread: counts.get(&a.id).copied().unwrap_or(0),
             detached: cfg!(windows)
                 && app
@@ -98,6 +100,84 @@ fn bridge_state(app: &AppHandle, label: &str) -> BridgeState {
 pub fn integration_state(window: Webview, app: AppHandle) -> Result<BridgeState, String> {
     remote(&window)?;
     Ok(bridge_state(&app, window.label()))
+}
+
+/// Accept only this WhatsApp webview's own profile details. The account id is
+/// derived from its trusted `wa-<id>` label, never supplied by page JavaScript.
+#[tauri::command]
+pub fn sync_whatsapp_profile(
+    window: Webview,
+    app: AppHandle,
+    profile_name: String,
+    photo_png: Option<Vec<u8>>,
+) -> Result<(), String> {
+    remote(&window)?;
+    crate::lock::require_unlocked(&app)?;
+    let id = accounts::id_from_label(window.label())
+        .ok_or_else(|| "invalid account window".to_owned())?
+        .to_owned();
+
+    let name = profile_name.trim();
+    if name.chars().count() > 128 || name.chars().any(char::is_control) {
+        return Err("invalid profile name".into());
+    }
+    let photo_png = photo_png.filter(|bytes| !bytes.is_empty());
+    if photo_png
+        .as_ref()
+        .is_some_and(|bytes| bytes.len() > 256 * 1024)
+    {
+        return Err("profile photo is too large".into());
+    }
+
+    let _guard = accounts::lock_mutations();
+    let mut file = accounts::load(&app);
+    let account = file
+        .accounts
+        .iter()
+        .find(|account| account.id == id)
+        .ok_or_else(|| "unknown account".to_owned())?;
+    let old_name = account.name.clone();
+    let name_changed = !name.is_empty() && accounts::sync_whatsapp_name(&mut file, &id, name)?;
+    let photo_changed = if let Some(png) = photo_png {
+        crate::accountphoto::set_whatsapp_profile(&app, &id, &png)?
+    } else {
+        false
+    };
+    let changed = name_changed || photo_changed;
+    let new_name = file
+        .accounts
+        .iter()
+        .find(|account| account.id == id)
+        .map(|account| account.name.clone())
+        .unwrap_or(old_name.clone());
+    if name_changed {
+        accounts::save(&app, &file).map_err(|e| e.to_string())?;
+    }
+    drop(_guard);
+
+    if !changed {
+        return Ok(());
+    }
+    if new_name != old_name {
+        if let Some(view) = app.get_webview(&accounts::window_label(&id)) {
+            #[cfg(windows)]
+            let visible = crate::sessions::selected(&app, view.window().label()).as_deref()
+                == Some(view.label());
+            #[cfg(not(windows))]
+            let visible = !crate::sessions::enabled()
+                || crate::sessions::selected(&app, view.window().label()).as_deref()
+                    == Some(view.label());
+            if visible {
+                let _ = view
+                    .window()
+                    .set_title(&format!("Venwhatsapp — {new_name}"));
+            }
+        }
+        crate::tray::rebuild_menu(&app);
+    }
+    crate::appicon::apply_account(&app, &id);
+    broadcast(&app);
+    Ok(())
 }
 pub fn broadcast(app: &AppHandle) {
     for (label, v) in app.webviews() {

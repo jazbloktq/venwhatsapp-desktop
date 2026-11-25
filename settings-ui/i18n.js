@@ -43,6 +43,8 @@
     "Abrir em janela separada": "Open in a separate window",
     "Usar ao iniciar": "Use on startup",
     "Renomear": "Rename",
+    "Usar nome do WhatsApp": "Use WhatsApp profile name",
+    "Remover foto personalizada": "Remove custom photo",
     "Renomear conta": "Rename account",
     "Informe um nome.": "Enter a name.",
     "Mover para cima": "Move up",

@@ -40,6 +40,10 @@
 *::-webkit-scrollbar-thumb:hover { background-color: rgba(134,150,160,.8); }
 *::-webkit-scrollbar-corner { background: transparent; }
 html, body { height: 100%; }
+html.embedded-panel { background: var(--bg); }
+html.embedded-panel body { opacity: 0; transform: translateY(9px) scale(.995); transform-origin: top center; transition: opacity .18s ease, transform .22s cubic-bezier(.2,.8,.2,1); }
+html.embedded-panel.panel-open body { opacity: 1; transform: none; }
+@media(prefers-reduced-motion:reduce) { html.embedded-panel body { transition: none; } }
 body {
   margin: 0; display: flex; flex-direction: column;
   background: var(--bg); color: var(--fg);
@@ -108,7 +112,10 @@ select option { background: var(--bg); color: var(--fg); }
 .account-more:active:not(:disabled) { background: var(--control-active); }
 @media(prefers-reduced-motion:reduce) { .account-more { transition:none; } }
 .acct-unread { background: var(--green); color: var(--on-green); font-size: 12px; padding: 2px 7px; border-radius: 10px; }
-.account-actions { position: fixed; inset: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--fg); box-shadow: 0 2px 12px #0004; padding: 6px 0; width: 245px; max-width:calc(100vw - 24px); margin: 0; max-height: calc(100vh - 24px);overflow-y:auto;overscroll-behavior:contain; }
+.account-actions { position: fixed; inset: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--card); color: var(--fg); box-shadow: 0 12px 34px #0004; padding: 6px 0; width: 245px; max-width:calc(100vw - 24px); margin: 0; max-height: calc(100vh - 24px);overflow-y:auto;overscroll-behavior:contain; transform-origin:top right; }
+.account-actions:popover-open, .account-actions[data-open="true"] { animation: account-menu-in .16s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes account-menu-in { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media(prefers-reduced-motion:reduce) { .account-actions:popover-open, .account-actions[data-open="true"] { animation:none; } }
 .account-actions button { display: block; width: 100%; border-radius: 0; background: transparent; color: inherit; text-align: left; font-size: 14px; font-weight: 400; padding: 12px 22px; }
 .account-actions button:hover, .account-actions button:focus-visible { background: var(--hover); }
 .account-actions .danger { color: var(--danger); }

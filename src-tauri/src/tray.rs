@@ -65,7 +65,7 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     TrayIconBuilder::with_id("main-tray")
         .icon(Image::from_bytes(ICON_NORMAL)?)
         .icon_as_template(ICON_IS_TEMPLATE)
-        .tooltip("WhatsApp")
+        .tooltip("Venwhatsapp")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| {
@@ -232,7 +232,7 @@ pub fn update_badge(app: &AppHandle, count: u32) {
     match badge_state(count) {
         BadgeState::Clear => {
             let _ = tray.set_title(None::<String>);
-            let _ = tray.set_tooltip(Some("WhatsApp"));
+            let _ = tray.set_tooltip(Some("Venwhatsapp"));
             if let Ok(icon) = Image::from_bytes(ICON_NORMAL) {
                 // Set image + template flag atomically: on macOS a set_icon followed
                 // by set_icon_as_template renders the icon twice and visibly flickers.
@@ -241,7 +241,7 @@ pub fn update_badge(app: &AppHandle, count: u32) {
         }
         BadgeState::Count(c) => {
             let _ = tray.set_title(Some(c.to_string()));
-            let _ = tray.set_tooltip(Some(trf("{0} conversas não lidas — WhatsApp", &[&c])));
+            let _ = tray.set_tooltip(Some(trf("{0} conversas não lidas — Venwhatsapp", &[&c])));
             if let Ok(icon) = Image::from_bytes(ICON_UNREAD) {
                 let _ = tray.set_icon_with_as_template(Some(icon), ICON_IS_TEMPLATE);
             }

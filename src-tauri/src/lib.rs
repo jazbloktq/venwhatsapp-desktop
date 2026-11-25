@@ -210,6 +210,7 @@ pub fn run() {
         .manage(accounts::ActiveAccount::new("wa-default".into()))
         .invoke_handler(tauri::generate_handler![
             integration::integration_state,
+            integration::sync_whatsapp_profile,
             integration::report_integration,
             integration::report_message_signal,
             integration::open_app_panel,
@@ -242,6 +243,7 @@ pub fn run() {
             commands::add_account,
             commands::remove_account,
             commands::rename_account,
+            commands::use_whatsapp_profile_name,
             commands::open_account,
             commands::set_default_account,
             commands::get_lock_status,

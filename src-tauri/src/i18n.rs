@@ -191,7 +191,7 @@ static EN_TABLE: &[(&str, &str)] = &[
     ("Sair", "Quit"),
     ("Bloquear agora", "Lock now"),
     ("Bloquear", "Lock"),
-    ("{0} conversas não lidas — WhatsApp", "{0} unread chats — WhatsApp"),
+    ("{0} conversas não lidas — Venwhatsapp", "{0} unread chats — Venwhatsapp"),
     ("Configurações do Venwhatsapp", "Venwhatsapp settings"),
     ("Voltar ao WhatsApp", "Back to WhatsApp"),
     ("Desfoque de privacidade…", "Privacy blur…"),

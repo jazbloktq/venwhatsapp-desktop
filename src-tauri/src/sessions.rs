@@ -798,6 +798,7 @@ pub fn open_panel(app: &AppHandle, parent: Option<&str>) -> tauri::Result<()> {
         owner.add_child(
             WebviewBuilder::new("settings", WebviewUrl::App("index.html".into()))
                 .initialization_script(crate::i18n::init_script())
+                .initialization_script("document.documentElement.classList.add('embedded-panel');document.addEventListener('DOMContentLoaded',function(){requestAnimationFrame(function(){requestAnimationFrame(function(){document.documentElement.classList.add('panel-open')})})},{once:true});")
                 .initialization_script(if cfg!(windows) {
                     ""
                 } else {
@@ -825,7 +826,9 @@ pub fn open_panel(app: &AppHandle, parent: Option<&str>) -> tauri::Result<()> {
         crate::lock::show_lock_window(app);
         return Ok(());
     }
+    let _ = panel.eval("document.documentElement.classList.remove('panel-open')");
     set_view_visible(app, &panel, true);
+    let _ = panel.eval("(function(){function open(){requestAnimationFrame(function(){requestAnimationFrame(function(){document.documentElement.classList.add('panel-open')})})}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',open,{once:true});else open()})()");
     let _ = owner.show();
     let _ = owner.unminimize();
     let _ = owner.set_focus();
@@ -837,6 +840,7 @@ pub fn close_panel(app: &AppHandle) {
     *crate::lock::guard(&state(app).panel_parent) = None;
     if let Some(v) = app.get_webview("settings") {
         let parent = v.window();
+        let _ = v.eval("document.documentElement.classList.remove('panel-open')");
         set_view_visible(app, &v, false);
         if let Some(label) = selected(app, parent.label()) {
             activate(app, &label);

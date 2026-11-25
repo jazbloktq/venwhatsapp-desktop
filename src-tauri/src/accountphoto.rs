@@ -10,8 +10,9 @@ use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 
 const DIR: &str = "account-photos";
+const WHATSAPP_DIR: &str = "whatsapp-profile-photos";
 
-fn path_for(app: &AppHandle, id: &str) -> Option<PathBuf> {
+fn path_in(app: &AppHandle, dir: &str, id: &str) -> Option<PathBuf> {
     // Account ids are `default` / `acct-N`; refuse anything that could leave the folder.
     if id.is_empty()
         || !id
@@ -23,41 +24,89 @@ fn path_for(app: &AppHandle, id: &str) -> Option<PathBuf> {
     app.path()
         .app_config_dir()
         .ok()
-        .map(|d| d.join(DIR).join(format!("{id}.png")))
+        .map(|d| d.join(dir).join(format!("{id}.png")))
+}
+
+fn custom_path(app: &AppHandle, id: &str) -> Option<PathBuf> {
+    path_in(app, DIR, id)
+}
+
+fn whatsapp_path(app: &AppHandle, id: &str) -> Option<PathBuf> {
+    path_in(app, WHATSAPP_DIR, id)
 }
 
 /// Validate and store the photo for an account.
 pub fn set(app: &AppHandle, id: &str, png: &[u8]) -> Result<(), String> {
     crate::appicon::validate(png)?;
-    let path = path_for(app, id).ok_or("invalid account id")?;
+    let path = custom_path(app, id).ok_or("invalid account id")?;
+    write_png(path, png)
+}
+
+/// Save a WhatsApp profile image separately so a user-selected photo can take
+/// precedence without losing the automatically synced image.
+pub fn set_whatsapp_profile(app: &AppHandle, id: &str, png: &[u8]) -> Result<bool, String> {
+    crate::appicon::validate(png)?;
+    let path = whatsapp_path(app, id).ok_or("invalid account id")?;
+    if std::fs::read(&path).ok().as_deref() == Some(png) {
+        return Ok(false);
+    }
+    write_png(path, png)?;
+    Ok(true)
+}
+
+fn write_png(path: PathBuf, png: &[u8]) -> Result<(), String> {
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
     }
     let tmp = path.with_extension("png.tmp");
     std::fs::write(&tmp, png).map_err(|e| e.to_string())?;
+    // `rename` does not replace an existing destination on Windows.
+    if path.exists() {
+        std::fs::remove_file(&path).map_err(|e| e.to_string())?;
+    }
     std::fs::rename(&tmp, &path).map_err(|e| e.to_string())?;
     Ok(())
 }
 
 /// Delete the stored photo, if any.
 pub fn clear(app: &AppHandle, id: &str) {
-    if let Some(path) = path_for(app, id) {
+    if let Some(path) = custom_path(app, id) {
         let _ = std::fs::remove_file(path);
     }
+}
+
+/// Delete the automatically synced WhatsApp profile photo for a removed account.
+pub fn clear_whatsapp_profile(app: &AppHandle, id: &str) {
+    if let Some(path) = whatsapp_path(app, id) {
+        let _ = std::fs::remove_file(path);
+    }
+}
+
+/// Whether this account has a user-selected image that overrides its profile photo.
+pub fn has_custom(app: &AppHandle, id: &str) -> bool {
+    custom_path(app, id).is_some_and(|path| valid_bytes(&path).is_some())
+}
+
+fn valid_bytes(path: &PathBuf) -> Option<Vec<u8>> {
+    let bytes = std::fs::read(path).ok()?;
+    crate::appicon::validate(&bytes).ok()?;
+    Some(bytes)
 }
 
 /// The photo as an image (the window icon of this account's own window, issue
 /// #54), if there is a valid one.
 pub fn image(app: &AppHandle, id: &str) -> Option<tauri::image::Image<'static>> {
-    let bytes = std::fs::read(path_for(app, id)?).ok()?;
-    crate::appicon::validate(&bytes).ok()?;
+    let bytes = custom_path(app, id)
+        .and_then(|path| valid_bytes(&path))
+        .or_else(|| whatsapp_path(app, id).and_then(|path| valid_bytes(&path)))?;
     tauri::image::Image::from_bytes(&bytes).ok()
 }
 
 /// The photo as a `data:` URL for the settings page, if there is a valid one.
 pub fn data_url(app: &AppHandle, id: &str) -> Option<String> {
-    let bytes = std::fs::read(path_for(app, id)?).ok()?;
-    crate::appicon::validate(&bytes).ok()?;
+    let bytes = custom_path(app, id)
+        .and_then(|path| valid_bytes(&path))
+        .or_else(|| whatsapp_path(app, id).and_then(|path| valid_bytes(&path)))?;
     Some(format!("data:image/png;base64,{}", base64(&bytes)))
 }
 

@@ -280,8 +280,9 @@ function accountMenu(a, accounts, anchor) {
     ...( /Win/.test(navigator.platform || navigator.userAgent) ? [[a.detached ? "Reintegrar à janela" : "Abrir em janela separada", () => accountAction(() => invoke(a.detached?"attach_account":"detach_account",{id:a.id}))]] : []),
     ["Usar ao iniciar",()=>accountAction(()=>invoke("set_default_account",{id:a.id}))],
     ["Alterar foto",()=>pickAccountPhoto(a.id)],
-    ...(a.photo?[["Remover foto",()=>accountAction(()=>invoke("remove_account_photo",{id:a.id}))]]:[]),
+    ...(a.custom_photo?[["Remover foto personalizada",()=>accountAction(()=>invoke("remove_account_photo",{id:a.id}))]]:[]),
     ["Renomear",async()=>{const name=await Dlg.prompt("",{title:"Renomear conta",value:a.name,okLabel:"Renomear",requiredMessage:"Informe um nome."});if(name!==null&&name!==a.name)await accountAction(()=>invoke("rename_account",{id:a.id,name}));}],
+    ...(a.name_customized?[["Usar nome do WhatsApp",()=>accountAction(()=>invoke("use_whatsapp_profile_name",{id:a.id}))]]:[]),
   ];
   const index=accounts.findIndex(x=>x.id===a.id);
   for(const [delta,label] of [[-1,"Mover para cima"],[1,"Mover para baixo"]]) {
