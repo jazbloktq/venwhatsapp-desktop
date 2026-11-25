@@ -3,12 +3,10 @@
   function L(pt, en) { return window.__WR_LANG === "en" ? en : pt; }
   if (!(window.__WHATRUST_WINDOWS__ || window.__WHATRUST_SINGLE__) || location.origin !== "https://web.whatsapp.com") return;
   var state = { accounts: [], current_id: "", native_notifications: false };
-  var host, root, menu, gear, accountButton, accountAvatar, accountName, accountBadge, status, lastReport = "", observer, scheduled, resizeObserver, resizeTarget, themeObserver, profileInFlight = false, lastProfileSignature = "";
+  var host, root, menu, gear, accountButton, accountName, accountBadge, status, lastReport = "", observer, scheduled, resizeObserver, resizeTarget, themeObserver, profileInFlight = false, lastProfileSignature = "";
   function call(cmd, args) { var t=window.__TAURI__;if(!t||!t.core)return Promise.resolve(null);return t.core.invoke(cmd, args).catch(function () { return null; }); }
   function button(text, fn) { var b=document.createElement("button");b.type="button";b.textContent=text;b.addEventListener("click",function(e){e.stopPropagation();fn();});return b; }
   function openPanel() { if(menu.open)menu.close();call("open_app_panel"); }
-  function initials(name) { return String(name||"?").trim().split(/\s+/).slice(0,2).map(function(part){return part[0]||"";}).join("").toUpperCase()||"?"; }
-  function fillAvatar(node, account) { node.replaceChildren();node.classList.toggle("has-photo",!!(account&&account.photo));if(account&&account.photo){var img=document.createElement("img");img.src=account.photo;img.alt="";node.appendChild(img);}else node.textContent=initials(account&&account.name); }
   function positionMenu(){var r=accountButton.getBoundingClientRect(),below=Math.max(0,innerHeight-12-r.bottom-8),above=Math.max(0,r.top-20),natural=menu.scrollHeight+2,down=below>=natural||below>=above;menu.style.maxHeight=Math.max(40,Math.min(innerHeight-24,down?below:above))+"px";var height=menu.offsetHeight;menu.style.top=Math.max(12,Math.min(down?r.bottom+8:r.top-height-8,innerHeight-height-12))+"px";menu.style.left=Math.max(12,Math.min(r.left,innerWidth-menu.offsetWidth-12))+"px";}
 
   function draw() {
@@ -16,7 +14,6 @@
     var focusKey=root.activeElement && root.activeElement.dataset.item;
     var keepFocus=menu.open && !!focusKey;
     var own=state.accounts.find(function(a){return a.id===state.current_id;});
-    fillAvatar(accountAvatar,own);
     accountName.textContent=own ? own.name : L("Contas","Accounts");
     accountBadge.textContent=own && own.unread ? String(own.unread>99?"99+":own.unread) : "";
     accountBadge.hidden=!accountBadge.textContent;
@@ -24,24 +21,11 @@
     accountButton.title=own ? L("Conta: ","Account: ")+own.name+L(" — Trocar conta"," — Switch account") : L("Trocar conta do WhatsApp","Switch WhatsApp account");
     gear.setAttribute("aria-label",L("Configurações do Venwhatsapp","Venwhatsapp settings"));gear.title=L("Configurações do Venwhatsapp","Venwhatsapp settings");menu.setAttribute("aria-label",L("Contas do Venwhatsapp","Venwhatsapp accounts"));
     menu.replaceChildren();
-    var heading=document.createElement("div");heading.className="menu-heading";
-    var title=document.createElement("h2");title.textContent=L("Suas contas","Your accounts");heading.appendChild(title);
-    var close=button("×",function(){menu.close();});close.className="menu-close";close.setAttribute("aria-label",L("Fechar","Close"));close.dataset.item="close";heading.appendChild(close);menu.appendChild(heading);
-    var list=document.createElement("div");list.className="account-list";
-    state.accounts.forEach(function(a){
-      var b=button("",function(){menu.close();call("switch_account",{id:a.id});});b.className="account-item";b.setAttribute("aria-current",String(a.id===state.current_id));b.dataset.item=a.id;
-      var avatar=document.createElement("span");avatar.className="item-avatar";fillAvatar(avatar,a);
-      var copy=document.createElement("span");copy.className="item-copy";
-      var name=document.createElement("span");name.className="item-name";name.textContent=a.name;
-      var detail=document.createElement("span");detail.className="item-detail";detail.textContent=a.id===state.current_id?L("Conta atual","Current account"):a.detached?L("Janela separada","Separate window"):L("WhatsApp","WhatsApp");
-      copy.append(name,detail);b.append(avatar,copy);
-      if(a.unread){var unread=document.createElement("span");unread.className="item-unread";unread.textContent=String(a.unread>99?"99+":a.unread);unread.setAttribute("aria-label",a.unread+L(" conversas não lidas"," unread chats"));b.appendChild(unread);}
-      if(a.id===state.current_id){var check=document.createElement("span");check.className="item-check";check.textContent="✓";check.setAttribute("aria-hidden","true");b.appendChild(check);}
-      list.appendChild(b);
-    });
-    menu.appendChild(list);
-    var manage=button(L("Gerenciar contas e configurações","Manage accounts and settings"),openPanel);manage.className="manage-button";manage.dataset.item="manage";menu.appendChild(manage);
-    status=document.createElement("p");status.className="menu-status";status.setAttribute("role","status");status.textContent=own?L("Conta atual: ","Current account: ")+own.name:L("Escolha uma conta","Choose an account");menu.appendChild(status);
+    var title=document.createElement("h2");title.textContent=L("Suas contas","Your accounts");menu.appendChild(title);
+    state.accounts.forEach(function(a){var b=button(a.name+(a.unread?" · "+a.unread+L(" conversas não lidas"," unread chats"):""),function(){menu.close();call("switch_account",{id:a.id});});b.setAttribute("aria-current",String(a.id===state.current_id));b.dataset.item=a.id;menu.appendChild(b);});
+    var manage=button(L("Gerenciar contas e configurações","Manage accounts and settings"),openPanel);manage.dataset.item="manage";menu.appendChild(manage);
+    var close=button(L("Fechar","Close"),function(){menu.close();});close.dataset.item="close";menu.appendChild(close);
+    status=document.createElement("p");status.setAttribute("role","status");status.textContent=own?L("Conta atual: ","Current account: ")+own.name:L("Escolha uma conta","Choose an account");menu.appendChild(status);
     if(menu.open)positionMenu();
     if(keepFocus){var restore=Array.from(menu.querySelectorAll("button")).find(function(b){return b.dataset.item===focusKey;})||menu.querySelector("button");if(restore)restore.focus();}
   }
@@ -49,45 +33,31 @@
   window.__whatrustState=function(next){if(!next)return;state=next;window.__whatrustPreferNative=!!next.native_notifications;window.__whatrustNotificationEpoch=next.notification_epoch||0;window.__whatrustLocked=!!next.notifications_locked;draw();};
   function create(){
     host=document.createElement("span");host.id="__whatrust_controls";host.setAttribute("data-whatrust","controls");
-    host.style.cssText="display:inline-flex;position:relative;align-items:center;flex:0 0 auto;max-width:min(270px,calc(100vw - 16px));margin-inline-start:8px;align-self:center";
+    host.style.cssText="display:inline-flex;align-items:center;flex:0 0 auto;min-width:84px;max-width:200px;margin-inline-start:8px;align-self:center";
     root=host.attachShadow({mode:"open"});
     var style=document.createElement("style");style.textContent=`
-      :host{color-scheme:light dark;color:light-dark(#111b21,#e9edef);font:13px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif}*{box-sizing:border-box}
-      button{font:inherit;cursor:pointer;border:0;background:transparent;color:inherit;transition:background-color .14s,color .14s,transform .14s}
-      button:hover{background:light-dark(#0000000c,#ffffff12)}button:active{transform:scale(.985)}button:focus-visible{outline:2px solid #21c063;outline-offset:2px}
-      .bar{pointer-events:auto;display:flex;align-items:center;justify-content:center;gap:5px;padding:6px;background:light-dark(#f7f8f8f2,#202c33f2);border:1px solid light-dark(#dfe3e5,#34454d);border-top:0;border-radius:0 0 16px 16px;box-shadow:0 10px 32px #0003;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
-      .bar>button{display:inline-flex;align-items:center;justify-content:center;flex:none;height:38px;min-width:38px;padding:6px;border-radius:20px}
-      .bar>.account{gap:8px;max-width:min(270px,calc(100vw - 64px));padding:4px 10px 4px 5px;border:1px solid light-dark(#d8dfe2,#3b4a50);background:light-dark(#fff,#26363e);border-radius:24px}
-      .bar>.account:hover{background:light-dark(#f2f5f5,#2b414a)}
-      .account-avatar,.item-avatar{display:grid;place-items:center;flex:none;overflow:hidden;border-radius:50%;background:light-dark(#dfe5e7,#34454d);color:light-dark(#41525a,#e9edef);font-weight:600;letter-spacing:.01em}
-      .account-avatar{width:27px;height:27px;font-size:10px}.item-avatar{width:38px;height:38px;font-size:12px;border:1px solid light-dark(#dce2e4,#3a4a51)}
-      .account-avatar.has-photo,.item-avatar.has-photo{background:transparent}.account-avatar img,.item-avatar img{display:block;width:100%;height:100%;object-fit:cover;border-radius:50%}
-      .account-name{min-width:0;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+      :host{color:inherit;font:13px system-ui}*{box-sizing:border-box}
+      button{font:inherit;cursor:pointer;border:0;background:transparent;color:inherit}
+      button:hover{background:light-dark(#0a0a0a0a,#ffffff14)}button:focus-visible{outline:2px solid #21c063;outline-offset:2px}
+      .bar{display:flex;align-items:center;gap:4px;flex:none;height:40px}
+      .bar>button{display:inline-flex;align-items:center;justify-content:center;flex:none;height:40px;min-width:40px;padding:8px;border-radius:50%}
+      .bar>.account{position:relative;gap:6px;border-radius:20px}
+      .account-name{max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
       :host([data-compact="true"]) .account-name{display:none}
-      .account-chevron{font-size:15px;line-height:1;color:light-dark(#65747a,#b7c4c9);margin-inline-start:1px}
-      .gear{color:light-dark(#546269,#d1d9dc)}.gear svg{width:20px;height:20px}
-      .badge{flex:none;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#21c063;color:#062d17;font:600 10px/17px system-ui;text-align:center}
+      .badge{flex:none;min-width:16px;height:16px;padding:0 4px;border-radius:9px;background:#21c063;color:#0a0a0a;font:10px/16px system-ui;text-align:center}
+      :host([data-compact="true"]) .badge{position:absolute;inset-inline-end:0;top:0}
       [hidden]{display:none!important}svg{width:24px;height:24px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-      dialog{position:fixed;color-scheme:light dark;color:light-dark(#111b21,#e9edef);background:light-dark(#fff,#202c33);border:1px solid light-dark(#dfe3e5,#34454d);border-radius:16px;box-shadow:0 18px 52px #0005;width:350px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow:auto;padding:8px;inset:auto;margin:0;scrollbar-width:thin;scrollbar-color:rgba(134,150,160,.45) transparent;transform-origin:top center}
-      dialog[open]{animation:menu-enter .18s cubic-bezier(.2,.8,.2,1) both}@keyframes menu-enter{from{opacity:0;transform:translateY(-5px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+      dialog{color-scheme:light dark;color:light-dark(#0a0a0a,#fafafa);background:light-dark(#fff,#232626);border:1px solid #8882;border-radius:8px;box-shadow:0 2px 12px #0005;width:320px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow:auto;padding:12px 8px;inset:auto;margin:0;scrollbar-width:thin;scrollbar-color:rgba(134,150,160,.45) transparent}
       dialog::-webkit-scrollbar{width:8px}dialog::-webkit-scrollbar-track{background:transparent}dialog::-webkit-scrollbar-thumb{background-color:rgba(134,150,160,.45);border:2px solid transparent;border-radius:4px;background-clip:padding-box}
-      dialog::backdrop{background:transparent}.menu-heading{display:flex;align-items:center;justify-content:space-between;padding:7px 8px 10px;border-bottom:1px solid light-dark(#edf0f1,#34444a)}
-      h2{font-size:16px;font-weight:650;letter-spacing:-.01em;margin:0}.menu-close{width:30px;height:30px;border-radius:50%;font-size:20px;line-height:1;color:light-dark(#66767c,#adbac0)}
-      .account-list{display:flex;flex-direction:column;gap:2px;padding:6px 0}.account-item{display:flex;align-items:center;gap:10px;width:100%;min-width:0;text-align:left;padding:8px;border-radius:11px;overflow:hidden}
-      .account-item[aria-current=true]{background:light-dark(#eaf7ef,#18382a)}.account-item:hover{background:light-dark(#f1f4f4,#2a3b42)}.account-item[aria-current=true]:hover{background:light-dark(#e2f3e8,#204331)}
-      .item-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:2px}.item-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600}.item-detail{color:light-dark(#66767c,#aab7bc);font-size:11px}
-      .item-unread{flex:none;min-width:20px;padding:2px 6px;border-radius:10px;background:#21c063;color:#062d17;text-align:center;font-size:10px;font-weight:700}.item-check{flex:none;padding:0 4px;color:#12a454;font-size:16px;font-weight:700}
-      .manage-button{display:flex;align-items:center;justify-content:center;width:100%;margin-top:3px;padding:10px;border-radius:10px;background:light-dark(#f2f5f5,#293b42);font-weight:600}.manage-button:hover{background:light-dark(#e8eeee,#31474f)}
-      .menu-status{font-size:11px;color:light-dark(#77858a,#9aa9af);margin:9px 8px 3px}
-      @media(prefers-reduced-motion:reduce){*,dialog[open]{animation:none!important;transition:none!important}}
+      dialog::backdrop{background:transparent}dialog button{overflow-wrap:anywhere;display:block;width:100%;text-align:left;margin:5px 0;padding:10px 12px;border-radius:8px}
+      h2{font-size:16px;font-weight:600;margin:4px 12px 10px}p{overflow-wrap:anywhere;font-size:12px;opacity:.65;margin:12px 12px 4px}dialog [aria-current=true]{background:#8696a01f;font-weight:600}
     `;
     var bar=document.createElement("div");bar.className="bar";
-    accountButton=button("Contas",function(){draw();if(!menu.open)menu.showModal();positionMenu();accountButton.setAttribute("aria-expanded","true");var b=menu.querySelector('.account-item[aria-current="true"]')||menu.querySelector(".account-item")||menu.querySelector("button");if(b)b.focus();});accountButton.className="account";accountButton.textContent="";
-    accountAvatar=document.createElement("span");accountAvatar.className="account-avatar";accountAvatar.setAttribute("aria-hidden","true");
+    accountButton=button("Contas",function(){draw();if(!menu.open)menu.showModal();positionMenu();accountButton.setAttribute("aria-expanded","true");var b=menu.querySelector("button");if(b)b.focus();});accountButton.className="account";accountButton.textContent="";
+    var people=document.createElementNS("http://www.w3.org/2000/svg","svg"),peoplePath=document.createElementNS("http://www.w3.org/2000/svg","path");people.setAttribute("viewBox","0 0 24 24");people.setAttribute("aria-hidden","true");peoplePath.setAttribute("d","M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M16 3a4 4 0 0 1 0 8 M22 21v-2a4 4 0 0 0-3-3.87 M13 7a4 4 0 1 1-8 0a4 4 0 0 1 8 0");people.appendChild(peoplePath);
     accountName=document.createElement("span");accountName.className="account-name";
-    var chevron=document.createElement("span");chevron.className="account-chevron";chevron.textContent="⌄";chevron.setAttribute("aria-hidden","true");
     accountBadge=document.createElement("span");accountBadge.className="badge";accountBadge.setAttribute("aria-hidden","true");
-    accountButton.append(accountAvatar,accountName,accountBadge,chevron);accountButton.setAttribute("aria-haspopup","dialog");accountButton.setAttribute("aria-expanded","false");
+    accountButton.append(people,accountName,accountBadge);accountButton.setAttribute("aria-haspopup","dialog");accountButton.setAttribute("aria-expanded","false");
     gear=button("",openPanel);gear.className="gear";gear.setAttribute("aria-label","Configurações do Venwhatsapp");gear.title="Configurações do Venwhatsapp";
     gear.textContent="";
     // Gear path: Lucide "settings" icon (ISC licence, https://lucide.dev).
@@ -129,7 +99,7 @@
   }
   function fits(target){
     var area=target.header.getBoundingClientRect(),r=host.getBoundingClientRect();
-    if(r.width<84||r.height<32||r.left<area.left||r.right>area.right+1||r.top<area.top||r.bottom>area.bottom+1)return false;
+    if(r.width<84||r.height<36||r.left<area.left||r.right>area.right+1||r.top<area.top||r.bottom>area.bottom+1)return false;
     return !Array.from(target.header.querySelectorAll("button,[role=button],h1,h2,[role=heading]")).some(function(e){
       if(host.contains(e))return false;var b=e.getBoundingClientRect();return b.width>0&&b.height>0&&r.left<b.right-1&&r.right>b.left+1&&r.top<b.bottom-1&&r.bottom>b.top+1;
     });
