@@ -9,6 +9,7 @@ fn main() {
         tauri_build::AppManifest::new().commands(&[
             // WhatsApp page (bridge.js)
             "integration_state",
+            "sync_whatsapp_profile",
             "report_integration",
             "report_message_signal",
             "open_app_panel",
