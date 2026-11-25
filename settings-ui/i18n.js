@@ -5,6 +5,33 @@
 // Variable strings use t("Abrir {0}", [name]); unknown strings stay visible.
 (function (root) {
   var EN = {
+    // Identity entries for the privacy controls authored directly in English.
+    "Enable privacy blur shortcut": "Enable privacy blur shortcut",
+    "Turns privacy blur on or off in every account. Choose what gets blurred in Settings → Security → Privacy blur.": "Turns privacy blur on or off in every account. Choose what gets blurred in Settings → Security → Privacy blur.",
+    "Keyboard combination": "Keyboard combination",
+    "Record": "Record",
+    "Privacy blur": "Privacy blur",
+    "Choose what is blurred in every account. Changes apply to open WhatsApp windows when you save.": "Choose what is blurred in every account. Changes apply to open WhatsApp windows when you save.",
+    "Enable privacy blur": "Enable privacy blur",
+    "All messages in chat": "All messages in chat",
+    "Blur amount": "Blur amount",
+    "Last message previews": "Last message previews",
+    "Media previews": "Media previews",
+    "Media gallery": "Media gallery",
+    "Text input": "Text input",
+    "Profile pictures": "Profile pictures",
+    "Group and contact names": "Group and contact names",
+    "Hide notification contents": "Hide notification contents",
+    "No transition delay": "No transition delay",
+    "Unblur everything when hovering over the app window": "Unblur everything when hovering over the app window",
+    "Blur everything when idle": "Blur everything when idle",
+    "Idle time": "Idle time",
+    "Privacy blur shortcut": "Privacy blur shortcut",
+    "Status": "Status",
+    "Há alterações não salvas": "Unsaved changes",
+    "Verificando…": "Checking…",
+    "Reinstalar o Venwhatsapp?": "Reinstall Venwhatsapp?",
+    "Isso baixa a versão mais recente e reinicia o Venwhatsapp. Deseja continuar?": "This downloads the latest release and restarts Venwhatsapp. Continue?",
     // titles
     "Venwhatsapp — Configurações": "Venwhatsapp — Settings",
     "Venwhatsapp — Bloqueado": "Venwhatsapp — Locked",

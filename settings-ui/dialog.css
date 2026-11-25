@@ -35,3 +35,4 @@
 }
 .dlg-actions button.dlg-secondary { background: transparent; color: inherit; border: 1px solid #8886; }
 .dlg-actions button.dlg-danger { background: #e5484d; color: #fff; }
+.dlg-actions button:focus { outline: 2px solid var(--green,#21c063); outline-offset: 2px; }

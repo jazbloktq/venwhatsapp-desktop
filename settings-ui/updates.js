@@ -14,10 +14,6 @@
     $(id).hidden = !on;
   }
 
-  function when(ms) {
-    return ms > 0 ? new Date(ms).toLocaleString(I18n.locale()) : t("Nunca");
-  }
-
   // What the "Install updates automatically" switch does for this install type.
   function autoInstallNote(m) {
     if (m.id === "appimage" || m.id === "macos") {
@@ -33,11 +29,23 @@
     st = s;
     const m = s.method;
     $("upd_current").textContent = s.current;
-    if ($("nav_version")) $("nav_version").textContent = s.current ? "v" + s.current : "";
     $("upd_method").textContent = m.label;
-    $("upd_last").textContent = when(s.lastCheck);
+    const last = $("upd_last");
+    if (s.lastCheck > 0) {
+      const date = new Date(s.lastCheck);
+      last.dateTime = date.toISOString();
+      last.textContent = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date);
+      last.title = new Intl.DateTimeFormat(undefined, { dateStyle: "full", timeStyle: "long" }).format(date);
+    } else {
+      last.removeAttribute("datetime");
+      last.removeAttribute("title");
+      last.textContent = t("Nunca");
+    }
     $("auto_update_install_subtitle").textContent = autoInstallNote(m);
-    $("upd_check").disabled = ["checking", "downloading", "installing", "handoff"].includes(s.state);
+    const checkBusy = ["checking", "downloading", "installing", "handoff"].includes(s.state);
+    $("upd_check").disabled = checkBusy;
+    $("upd_check").textContent = s.state === "checking" ? t("Verificando…") : t("Verificar agora");
+    $("upd_check").setAttribute("aria-busy", String(s.state === "checking"));
     $("upd_reinstall").disabled = ["checking", "downloading", "installing", "handoff", "staged", "ready"].includes(s.state);
 
     const v = s.latest ? s.latest.version : "";
@@ -48,7 +56,7 @@
     const busy = s.state === "downloading" || s.state === "installing";
     switch (s.state) {
       case "checking": title = t("Procurando atualizações…"); break;
-      case "current": title = t("Você está na versão mais recente"); break;
+      case "current": break;
       case "available":
       case "error":
         if (s.newer) {
@@ -167,7 +175,15 @@
 
   window.addEventListener("DOMContentLoaded", () => {
     $("upd_check").addEventListener("click", () => act("check_for_updates"));
-    $("upd_reinstall").addEventListener("click", () => act("reinstall_latest_release"));
+    $("upd_reinstall").addEventListener("click", async () => {
+      const confirmed = await Dlg.confirm(t("Isso baixa a versão mais recente e reinicia o Venwhatsapp. Deseja continuar?"), {
+        title: t("Reinstalar o Venwhatsapp?"),
+        cancelLabel: t("Cancelar"),
+        okLabel: t("Reinstalar"),
+        cancelDefault: true,
+      });
+      if (confirmed) await act("reinstall_latest_release");
+    });
     $("upd_install").addEventListener("click", () => act("install_update"));
     $("upd_apply").addEventListener("click", () => act("install_update"));
     $("upd_restart").addEventListener("click", () => act("restart_to_update"));

@@ -136,7 +136,7 @@
       document.addEventListener("keydown", onKeydown, true);
 
       document.body.appendChild(backdrop);
-      (input || ok).focus();
+      (input || (opts.cancelDefault && cancel) || ok).focus();
       if (input) input.select();
     });
   }

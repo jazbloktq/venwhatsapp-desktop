@@ -3,6 +3,9 @@ const BOOLS = ["close_to_tray", "start_minimized", "autostart", "notifications",
 const PRIVACY_GROUPS = ["chat", "preview", "media", "gallery", "input", "avatars", "names"];
 const ZOOM_DEFAULT = 1;
 const SINGLE_WINDOW_SUBTITLE = "Uma janela com um seletor de contas; as contas ocultas continuam conectadas. Requer reiniciar o Venwhatsapp.";
+let savedFormState = null;
+let saveBusy = false;
+let pendingFieldSaves = 0;
 
 // The menu-bar rows are macOS-only. get_settings reports the OS this build targets
 // in `platform`; the rows start hidden and appear here once it is known.
@@ -134,18 +137,23 @@ async function chooseDownloadDir() {
     const previous = downloadDir;
     downloadDir = dir;
     showDownloadDir();
-    // save() shows a refusal in the note; then go back to what is stored.
-    if (!(await save())) {
+    if (!(await saveField("download_dir"))) {
       downloadDir = previous;
       showDownloadDir();
+      updateSaveState();
     }
   } catch (e) { flash(String(e)); }
 }
 
 async function resetDownloadDir() {
+  const previous = downloadDir;
   downloadDir = null;
   showDownloadDir();
-  await save();
+  if (!(await saveField("download_dir"))) {
+    downloadDir = previous;
+    showDownloadDir();
+    updateSaveState();
+  }
 }
 
 async function chooseIcon() {
@@ -219,6 +227,8 @@ async function load() {
   showDownloadDir();
   showIcon(!!s.custom_icon);
   loadProxy(s);
+  savedFormState = readFormState();
+  updateSaveState();
 }
 
 // --- Proxy (issue #52) ---
@@ -261,47 +271,105 @@ function loadProxy(s) {
   syncProxyRestart();
 }
 
-async function save() {
-  const s = await invoke("get_settings");
+function readFormState() {
+  const form = {};
   for (const f of BOOLS) {
     const el = document.getElementById(f);
-    if (el) s[f] = el.checked;
+    if (el) form[f] = el.checked;
   }
-  const hk = window.HotkeyFmt.fromDisplay(document.getElementById("hotkey").value.trim());
-  s.hotkey = hk || "CmdOrCtrl+Shift+W";
-  s.blur_hotkey = window.HotkeyFmt.fromDisplay(document.getElementById("blur_hotkey").value.trim()) || "CmdOrCtrl+Shift+B";
-  s.privacy_blur = readPrivacyBlur();
-  s.privacy_blur_configured = true;
-  s.zoom = parseFloat(document.getElementById("zoom").value) || ZOOM_DEFAULT;
-  s.title_bar = document.getElementById("title_bar").value || "auto";
-  s.rendering = document.getElementById("rendering").value || "auto";
-  s.language = "en";
-  s.download_dir = downloadDir;
+  form.hotkey = window.HotkeyFmt.fromDisplay(document.getElementById("hotkey").value.trim()) || "CmdOrCtrl+Shift+W";
+  form.blur_hotkey = window.HotkeyFmt.fromDisplay(document.getElementById("blur_hotkey").value.trim()) || "CmdOrCtrl+Shift+B";
+  form.privacy_blur = readPrivacyBlur();
+  form.zoom = parseFloat(document.getElementById("zoom").value) || ZOOM_DEFAULT;
+  form.title_bar = document.getElementById("title_bar").value || "auto";
+  form.rendering = document.getElementById("rendering").value || "auto";
+  form.download_dir = downloadDir;
   if (proxySupported) {
-    s.proxy_mode = document.getElementById("proxy_mode").value;
-    s.proxy_host = document.getElementById("proxy_host").value.trim();
-    const port = document.getElementById("proxy_port").value.trim();
-    // Anything but plain digits becomes 0, which the backend rejects.
-    s.proxy_port = /^[0-9]{1,5}$/.test(port) ? parseInt(port, 10) : 0;
+    form.proxy_mode = document.getElementById("proxy_mode").value;
+    form.proxy_host = document.getElementById("proxy_host").value.trim();
+    form.proxy_port = document.getElementById("proxy_port").value.trim();
   }
+  return form;
+}
+
+function formSettings(form, settings) {
+  Object.assign(settings, form);
+  if (form.proxy_port !== undefined) {
+    // Anything but plain digits becomes 0, which the backend rejects.
+    settings.proxy_port = /^[0-9]{1,5}$/.test(form.proxy_port) ? parseInt(form.proxy_port, 10) : 0;
+  }
+  settings.privacy_blur_configured = true;
+  settings.language = "en";
+  return settings;
+}
+
+function updateSaveState() {
+  const button = document.getElementById("save");
+  const state = document.getElementById("save-state");
+  if (!button || !state) return;
+  const dirty = !!savedFormState && JSON.stringify(readFormState()) !== JSON.stringify(savedFormState);
+  state.hidden = !dirty;
+  state.textContent = dirty ? t("Há alterações não salvas") : "";
+  button.disabled = !dirty || saveBusy || pendingFieldSaves > 0;
+}
+
+async function saveField(key) {
+  if (!savedFormState) return false;
+  const form = readFormState();
+  const value = form[key];
+  if (value === undefined) return false;
+  pendingFieldSaves++;
+  updateSaveState();
   const note = document.getElementById("note");
   try {
-    const warn = await invoke("set_settings", { settings: s });
+    const settings = await invoke("get_settings");
+    settings[key] = key === "proxy_port"
+      ? (/^[0-9]{1,5}$/.test(value) ? parseInt(value, 10) : 0)
+      : value;
+    settings.language = "en";
+    const warning = await invoke("set_settings", { settings });
     const saved = await invoke("get_settings");
     proxySaved = { proxy_mode: saved.proxy_mode, proxy_host: saved.proxy_host, proxy_port: saved.proxy_port };
-    document.getElementById("proxy_host").value = saved.proxy_host;
+    savedFormState[key] = value;
     syncProxyRestart();
-    if (warn) {
-      note.textContent = t("Salvo com observação: {0}", [warn]);
-      setTimeout(() => (note.textContent = ""), 6000);
-    } else {
-      note.textContent = "Alterações salvas ✓";
-      setTimeout(() => (note.textContent = ""), 1500);
-    }
+    updateSaveState();
+    if (warning) flash(t("Salvo com observação: {0}", [warning]), 6000);
+    else flash(t("Alterações salvas ✓"), 1500);
     return true;
   } catch (e) {
     note.textContent = String(e);
     return false;
+  } finally {
+    pendingFieldSaves--;
+    updateSaveState();
+  }
+}
+
+async function save() {
+  if (!savedFormState || saveBusy || pendingFieldSaves > 0) return false;
+  const form = readFormState();
+  saveBusy = true;
+  updateSaveState();
+  const note = document.getElementById("note");
+  try {
+    const settings = formSettings(form, await invoke("get_settings"));
+    const warning = await invoke("set_settings", { settings });
+    const saved = await invoke("get_settings");
+    proxySaved = { proxy_mode: saved.proxy_mode, proxy_host: saved.proxy_host, proxy_port: saved.proxy_port };
+    document.getElementById("proxy_host").value = saved.proxy_host;
+    document.getElementById("proxy_port").value = saved.proxy_port ? String(saved.proxy_port) : "";
+    syncProxyRestart();
+    Object.assign(savedFormState, form);
+    updateSaveState();
+    if (warning) flash(t("Salvo com observação: {0}", [warning]), 6000);
+    else flash(t("Alterações salvas ✓"), 1500);
+    return true;
+  } catch (e) {
+    note.textContent = String(e);
+    return false;
+  } finally {
+    saveBusy = false;
+    updateSaveState();
   }
 }
 
@@ -476,9 +544,12 @@ window.addEventListener("DOMContentLoaded", () => {
   loadLock();
   wireLock();
   document.getElementById("save").addEventListener("click", save);
-  // Update settings apply as soon as they are saved.
-  for (const id of ["auto_update_check", "auto_update_install"]) {
-    document.getElementById(id).addEventListener("change", save);
+  document.querySelector(".prefs").addEventListener("input", updateSaveState);
+  document.querySelector(".prefs").addEventListener("change", updateSaveState);
+  // These settings apply immediately. Persist only the changed field so edits
+  // elsewhere in the form remain pending for the shared Save button.
+  for (const id of ["auto_update_check", "auto_update_install", "zoom", "title_bar", "rendering"]) {
+    document.getElementById(id).addEventListener("change", () => saveField(id));
   }
   document.getElementById("proxy_mode").addEventListener("change", syncProxyRows);
   document.getElementById("proxy_restart_btn").addEventListener("click", async () => {
@@ -492,7 +563,10 @@ window.addEventListener("DOMContentLoaded", () => {
   renderContributors();
   document.getElementById('startup_account').addEventListener('change', event => {
     const id = event.target.value;
-    accountAction(() => invoke('set_default_account', { id }));
+    accountAction(async () => {
+      await invoke('set_default_account', { id });
+      flash(t("Alterações salvas ✓"), 1500);
+    });
   });
   document.getElementById("new_account_name").addEventListener("keydown", (e) => {
     if (e.key === "Enter") addAccount();
@@ -505,11 +579,6 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("reset_download_dir").addEventListener("click", resetDownloadDir);
   document.getElementById("choose_icon").addEventListener("click", chooseIcon);
   document.getElementById("reset_icon").addEventListener("click", resetIcon);
-  // Zoom saves on change rather than on Save: picking a size you cannot see the
-  // effect of is guesswork, and the webview applies it immediately.
-  document.getElementById("zoom").addEventListener("change", save);
-  document.getElementById("title_bar").addEventListener("change", save);
-  document.getElementById("rendering").addEventListener("change", save);
   // The zoom shortcuts change it from the WhatsApp window; catch up on return.
   window.addEventListener("focus", () => {
     invoke("get_settings").then((s) => {
@@ -550,6 +619,7 @@ async function saveLockOptions() {
     lockOnHide: document.getElementById("lock_on_hide").checked,
     idleSecs: Math.max(0, idleMin) * 60,
   });
+  flash(t("Alterações salvas ✓"), 1500);
 }
 
 function wireLock() {
@@ -607,6 +677,7 @@ function wireLock() {
   document.getElementById("biometric_enabled").addEventListener("change", async (e) => {
     try {
       await invoke("set_biometric_enabled", { enabled: e.target.checked });
+      flash(t("Alterações salvas ✓"), 1500);
     } catch (err) {
       e.target.checked = !e.target.checked; // revert on failure
       await Dlg.alert(String(err), { title: "Não foi possível alterar a biometria" });

@@ -9,8 +9,8 @@
     <link rel="stylesheet" href="dialog.css" />
   </head>
   <body>
-    <header class="app-header"><div><strong>Configurações</strong><span>Venwhatsapp</span></div><button id="back-to-chat" type="button" class="secondary back-button" aria-label="Voltar ao WhatsApp" title="Voltar ao WhatsApp" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5 M12 5l-7 7 7 7"/></svg><span>Voltar ao WhatsApp</span></button></header>
-    <div class="settings-layout"><nav class="settings-nav" aria-label="Configurações"><a href="#sec-contas">Contas</a><a href="#sec-notificacoes">Notificações</a><a href="#sec-aparencia">Aparência</a><a href="#sec-seguranca">Segurança</a><a href="#sec-sistema">Inicialização</a><a href="#sec-rede">Rede</a><a href="#sec-atalhos">Atalhos</a><a href="#sec-diagnostico">Diagnóstico</a><a class="nav-about" href="#sec-atualizacoes"><span class="nav-about-text"><span>Sobre o Venwhatsapp</span><span class="nav-version" id="nav_version"></span></span></a></nav>
+    <header class="app-header"><button id="back-to-chat" type="button" class="secondary back-button" aria-label="Voltar ao WhatsApp" title="Voltar ao WhatsApp" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5 M12 5l-7 7 7 7"/></svg><span>Voltar ao WhatsApp</span></button><strong>Configurações</strong></header>
+    <div class="settings-layout"><nav class="settings-nav" aria-label="Configurações"><a href="#sec-contas">Contas</a><a href="#sec-notificacoes">Notificações</a><a href="#sec-aparencia">Aparência</a><a href="#sec-seguranca">Segurança</a><a href="#sec-sistema">Inicialização</a><a href="#sec-rede">Rede</a><a href="#sec-atalhos">Atalhos</a><a href="#sec-diagnostico">Diagnóstico</a><a class="nav-about" href="#sec-atualizacoes">Sobre o Venwhatsapp</a></nav>
     <!-- Local preferences use familiar WhatsApp rows: titled
          groups of boxed-list rows, a title + subtitle on the left and the control
          on the right. Element ids are what main.js uses; keep them stable. -->
@@ -151,7 +151,7 @@
           </label>
         </div>
         <p class="group-note">Proxy com usuário e senha não é suportado: os navegadores embutidos não aceitam credenciais por esse caminho. A alteração vale após reiniciar o Venwhatsapp.</p>
-        <p id="proxy_restart" class="hotkey-hint" hidden><span>Reinicie o Venwhatsapp para aplicar o proxy.</span> <button type="button" id="proxy_restart_btn" class="secondary">Reiniciar agora</button></p>
+        <div id="proxy_restart" class="action-row" hidden><span>Reinicie o Venwhatsapp para aplicar o proxy.</span><button type="button" id="proxy_restart_btn" class="secondary">Reiniciar agora</button></div>
       </section>
 
       <section class="group" id="sec-atalhos">
@@ -284,28 +284,15 @@
             <input type="checkbox" class="switch" id="auto_update_install" />
           </label>
         </div>
-        <div class="boxed-list">
-          <div class="row">
-            <span class="row-text"><span class="row-title">Reinstalar pelo GitHub</span>
-              <span class="row-subtitle">Baixa e verifica a versão mais recente publicada, mesmo que seja a mesma versão que já está instalada.</span></span>
-            <button type="button" id="upd_reinstall" class="secondary">Reinstalar</button>
-          </div>
-          <div class="row">
-            <span class="row-text"><span class="row-title">Versão instalada</span>
-              <span class="row-subtitle" id="upd_current"></span></span>
-            <button type="button" id="upd_check" class="secondary">Verificar agora</button>
-          </div>
-          <div class="row">
-            <span class="row-text"><span class="row-title">Tipo de instalação</span>
-              <span class="row-subtitle" id="upd_method"></span></span>
-          </div>
-          <div class="row">
-            <span class="row-text"><span class="row-title">Última verificação</span>
-              <span class="row-subtitle" id="upd_last"></span></span>
-          </div>
+        <h3>Status</h3>
+        <div class="boxed-list upd-status">
+          <div class="row"><span class="row-title">Versão instalada</span><span class="row-value" id="upd_current"></span></div>
+          <div class="row"><span class="row-title">Tipo de instalação</span><span class="row-value" id="upd_method"></span></div>
+          <div class="row"><span class="row-title">Última verificação</span><time class="row-value" id="upd_last"></time></div>
         </div>
+        <div class="upd-actions"><button type="button" id="upd_check" class="secondary">Verificar agora</button><button type="button" id="upd_reinstall" class="secondary">Reinstalar</button></div>
         <div id="upd_panel" class="upd-panel" hidden>
-          <h3 id="upd_title"></h3>
+          <h4 id="upd_title"></h4>
           <progress id="upd_progress" max="100" hidden></progress>
           <p id="upd_message" class="group-note" role="status" aria-live="polite"></p>
           <p id="upd_error" class="hotkey-hint" role="alert" hidden></p>
@@ -332,8 +319,8 @@
     </main></div>
 
     <footer class="footer">
-      <span id="note" class="note" role="status" aria-live="polite"></span>
-      <button id="save">Salvar</button>
+      <span class="footer-status"><span id="save-state" class="save-state" role="status" aria-live="polite" hidden></span><span id="note" class="note" role="status" aria-live="polite"></span></span>
+      <button id="save" disabled>Salvar</button>
     </footer>
 
     <script src="dialog.js"></script>
