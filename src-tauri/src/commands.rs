@@ -673,7 +673,9 @@ pub async fn add_account(
         open: true,
         is_default,
         detached: false,
+        name_customized: acct.name_customized,
         photo: None,
+        custom_photo: false,
     })
 }
 
