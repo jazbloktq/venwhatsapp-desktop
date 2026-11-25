@@ -426,7 +426,7 @@ mod tests {
     fn cannot_remove_last_account() {
         let mut f = AccountsFile::default();
         let err = remove(&mut f, "default").unwrap_err();
-        assert!(err.contains("última conta"));
+        assert!(err.contains("last account"));
         assert_eq!(f.accounts.len(), 1);
     }
 
@@ -435,7 +435,7 @@ mod tests {
         let mut f = AccountsFile::default();
         add(&mut f, "Work");
         let err = remove(&mut f, "nope").unwrap_err();
-        assert!(err.contains("Conta não encontrada"));
+        assert!(err.contains("Account not found"));
         assert_eq!(f.accounts.len(), 2);
     }
 
@@ -450,7 +450,7 @@ mod tests {
     fn rename_unknown_id_is_err() {
         let mut f = AccountsFile::default();
         let err = rename(&mut f, "nope", "x").unwrap_err();
-        assert!(err.contains("Conta não encontrada"));
+        assert!(err.contains("Account not found"));
     }
 
     #[test]

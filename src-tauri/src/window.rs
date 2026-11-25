@@ -2116,8 +2116,8 @@ mod tests {
         assert_eq!(skips.total(), 2);
         // The toast summary names both reasons, never file names.
         let s = summarize_skips(&skips);
-        assert!(s.contains("pastas"), "{s}");
-        assert!(s.contains("sem permissão de leitura"), "{s}");
+        assert!(s.contains("folders or special files"), "{s}");
+        assert!(s.contains("without read permission"), "{s}");
         assert!(!s.contains("ok.mp4"), "{s}");
     }
 
@@ -2224,7 +2224,7 @@ mod tests {
             too_large: 1,
             ..Default::default()
         });
-        assert_eq!(s, "Não anexados: 1 arquivo acima do limite de 500 MB.");
+        assert_eq!(s, "Not attached: 1 file over the 500 MB limit.");
     }
 
     #[test]
