@@ -812,6 +812,7 @@ pub fn open_panel(app: &AppHandle, parent: Option<&str>) -> tauri::Result<()> {
     } else {
         owner.add_child(
             WebviewBuilder::new("settings", WebviewUrl::App("index.html".into()))
+                .transparent(true)
                 .initialization_script(crate::i18n::init_script())
                 .initialization_script("document.documentElement.classList.add('embedded-panel');")
                 .initialization_script(if cfg!(windows) {
@@ -841,8 +842,8 @@ pub fn open_panel(app: &AppHandle, parent: Option<&str>) -> tauri::Result<()> {
         crate::lock::show_lock_window(app);
         return Ok(());
     }
-    set_view_visible(app, &panel, true);
     let _ = panel.eval("(function(){var attempts=0;function open(){var motion=window.__venwhatsappSettingsPanelMotion;if(motion){motion.open();return;}if(++attempts<100)setTimeout(open,25);}open();})()");
+    set_view_visible(app, &panel, true);
     let _ = owner.show();
     let _ = owner.unminimize();
     let _ = owner.set_focus();

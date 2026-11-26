@@ -3,26 +3,23 @@
   const invoke=window.__TAURI__.core.invoke, isWindows=/Win/.test(navigator.platform||navigator.userAgent);
   const back=document.getElementById("back-to-chat"),embedded=isWindows||!!window.__WHATRUST_SINGLE__;back.hidden=false;
   let panelAnimation=null,panelEpoch=0;
-  const panelFrames={from:{opacity:0,transform:"translateY(14px) scale(.99)"},to:{opacity:1,transform:"translateY(0) scale(1)"}};
+  const panelFrames={from:{opacity:0,transform:"translateY(8px) scale(.995)"},to:{opacity:1,transform:"translateY(0) scale(1)"}};
   function cancelPanelAnimation(){panelEpoch++;if(panelAnimation){panelAnimation.cancel();panelAnimation=null;}}
   const panelMotion={
     open(){
       cancelPanelAnimation();
-      const epoch=panelEpoch,root=document.documentElement,body=document.body;
-      root.classList.remove("panel-open");void body.offsetHeight;
+      const root=document.documentElement,body=document.body;
+      root.classList.remove("panel-open");
       if(!embedded||matchMedia("(prefers-reduced-motion: reduce)").matches||!body.animate){root.classList.add("panel-open");return;}
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{
-        if(epoch!==panelEpoch)return;
-        root.classList.add("panel-open");
-        panelAnimation=body.animate([panelFrames.from,panelFrames.to],{duration:280,easing:"cubic-bezier(.2,.8,.2,1)",fill:"both"});
-      }));
+      root.classList.add("panel-open");
+      panelAnimation=body.animate([panelFrames.from,panelFrames.to],{duration:200,easing:"cubic-bezier(.2,.8,.2,1)",fill:"both"});
     },
     close(){
       cancelPanelAnimation();
       const epoch=panelEpoch,root=document.documentElement,body=document.body;
       root.classList.remove("panel-open");
       if(!embedded||matchMedia("(prefers-reduced-motion: reduce)").matches||!body.animate)return Promise.resolve(true);
-      const animation=body.animate([panelFrames.to,panelFrames.from],{duration:260,easing:"cubic-bezier(.2,.8,.2,1)",fill:"both"});
+      const animation=body.animate([panelFrames.to,panelFrames.from],{duration:200,easing:"cubic-bezier(.2,.8,.2,1)",fill:"both"});
       panelAnimation=animation;
       return animation.finished.then(()=>epoch===panelEpoch).catch(()=>false);
     }
