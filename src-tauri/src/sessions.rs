@@ -328,6 +328,21 @@ pub fn selected(app: &AppHandle, parent: &str) -> Option<String> {
         .map(|(l, _)| l)
 }
 
+/// Account whose WhatsApp view is behind the trusted settings panel, falling
+/// back to the last active account when Settings is opened as a window.
+pub fn history_account_id(app: &AppHandle) -> Option<String> {
+    let parent = crate::lock::guard(&state(app).panel_parent).clone();
+    let label = parent
+        .as_deref()
+        .and_then(|parent| selected(app, parent))
+        .or_else(|| crate::lock::guard(&state(app).main_active).clone())
+        .or_else(|| Some(crate::lock::guard(&app.state::<ActiveAccount>()).clone()));
+    label
+        .as_deref()
+        .and_then(accounts::id_from_label)
+        .map(str::to_owned)
+}
+
 pub fn open_account(app: &AppHandle, account: &Account, hidden: bool) -> tauri::Result<()> {
     let parent = initialize(app, hidden)?;
     let label = accounts::window_label(&account.id);

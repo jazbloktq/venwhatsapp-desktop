@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main-remote",
-  "description": "What the remote WhatsApp Web page may call through the injected adapter: notifications, unread counts, account switching, profile name/photo sync, diagnostics and download actions. core:default is intentionally NOT granted so the remote origin cannot emit/listen on internal event channels or introspect the app; notification sending remains lock-aware.",
+  "description": "What the remote WhatsApp Web page may call through the injected adapter: notifications, unread counts, account switching, profile name/photo sync, diagnostics, download actions, its logger preference sync, and opening the trusted History settings tab. core:default is intentionally NOT granted so the remote origin cannot emit/listen on internal event channels or introspect the app; history export/clear and app management remain local-only.",
   "remote": {
     "urls": [
       "https://web.whatsapp.com/*"
@@ -24,7 +24,8 @@
     "allow-report-integration",
     "allow-report-message-signal",
     "allow-sync-whatsapp-profile",
-    "allow-open-app-panel"
+    "allow-open-app-panel",
+    "allow-history-bridge"
   ],
   "webviews": [
     "wa-*"

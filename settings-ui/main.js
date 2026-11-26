@@ -121,7 +121,32 @@ function readPrivacyBlur() {
 }
 
 function syncPrivacyBlurControls() {
-  document.getElementById("privacy_idle_controls").hidden = !document.getElementById("privacy_idle_on").checked;
+  const masterOn = document.getElementById("privacy_blur_on").checked;
+  for (const group of PRIVACY_GROUPS) {
+    const toggle = document.getElementById("privacy_" + group + "_on");
+    const amount = document.getElementById("privacy_" + group + "_amt");
+    const enabled = masterOn && !!toggle?.checked;
+    if (toggle) {
+      toggle.disabled = !masterOn;
+      toggle.closest(".privacy-option")?.classList.toggle("is-disabled", !masterOn);
+    }
+    if (amount) {
+      amount.disabled = !enabled;
+      amount.closest(".privacy-slider-row")?.classList.toggle("is-disabled", !enabled);
+    }
+  }
+  for (const id of ["privacy_notif", "privacy_no_transition", "privacy_unblur_hover", "privacy_idle_on"]) {
+    const toggle = document.getElementById(id);
+    toggle.disabled = !masterOn;
+    toggle.closest(".privacy-option")?.classList.toggle("is-disabled", !masterOn);
+  }
+  const idleOn = masterOn && document.getElementById("privacy_idle_on").checked;
+  const idleControls = document.getElementById("privacy_idle_controls");
+  idleControls.hidden = !idleOn;
+  idleControls.querySelectorAll(".privacy-range").forEach((input) => {
+    input.disabled = !idleOn;
+    input.closest(".privacy-slider-row")?.classList.toggle("is-disabled", !idleOn);
+  });
 }
 
 function flash(message, ms = 4000) {
@@ -218,6 +243,7 @@ async function load() {
   document.getElementById("hotkey").value = window.HotkeyFmt.toDisplay(s.hotkey || "CmdOrCtrl+Shift+W");
   document.getElementById("blur_hotkey").value = window.HotkeyFmt.toDisplay(s.blur_hotkey || "CmdOrCtrl+Shift+B");
   loadPrivacyBlur(s.privacy_blur || {});
+  document.getElementById("history_save_media").checked = await invoke("get_history_save_media");
   selectNearestZoom(Number.isFinite(s.zoom) ? s.zoom : ZOOM_DEFAULT);
   s.language = "en";
   if (I18n.lang() !== "en") I18n.setLang("en");
@@ -284,6 +310,7 @@ function readFormState() {
   form.title_bar = document.getElementById("title_bar").value || "auto";
   form.rendering = document.getElementById("rendering").value || "auto";
   form.download_dir = downloadDir;
+  form.history_save_media = document.getElementById("history_save_media").checked;
   if (proxySupported) {
     form.proxy_mode = document.getElementById("proxy_mode").value;
     form.proxy_host = document.getElementById("proxy_host").value.trim();
@@ -352,13 +379,22 @@ async function save() {
   updateSaveState();
   const note = document.getElementById("note");
   try {
-    const settings = formSettings(form, await invoke("get_settings"));
-    const warning = await invoke("set_settings", { settings });
-    const saved = await invoke("get_settings");
-    proxySaved = { proxy_mode: saved.proxy_mode, proxy_host: saved.proxy_host, proxy_port: saved.proxy_port };
-    document.getElementById("proxy_host").value = saved.proxy_host;
-    document.getElementById("proxy_port").value = saved.proxy_port ? String(saved.proxy_port) : "";
-    syncProxyRestart();
+    const pageForm = { ...form }, savedPageForm = { ...savedFormState };
+    delete pageForm.history_save_media;
+    delete savedPageForm.history_save_media;
+    let warning = null;
+    if (JSON.stringify(pageForm) !== JSON.stringify(savedPageForm)) {
+      const settings = formSettings(pageForm, await invoke("get_settings"));
+      warning = await invoke("set_settings", { settings });
+      const saved = await invoke("get_settings");
+      proxySaved = { proxy_mode: saved.proxy_mode, proxy_host: saved.proxy_host, proxy_port: saved.proxy_port };
+      document.getElementById("proxy_host").value = saved.proxy_host;
+      document.getElementById("proxy_port").value = saved.proxy_port ? String(saved.proxy_port) : "";
+      syncProxyRestart();
+    }
+    if (form.history_save_media !== savedFormState.history_save_media) {
+      await invoke("set_history_save_media", { saveMedia: form.history_save_media });
+    }
     Object.assign(savedFormState, form);
     updateSaveState();
     if (warning) flash(t("Salvo com observação: {0}", [warning]), 6000);
@@ -544,6 +580,23 @@ window.addEventListener("DOMContentLoaded", () => {
   loadLock();
   wireLock();
   document.getElementById("save").addEventListener("click", save);
+  document.getElementById("history-export").addEventListener("click", async () => {
+    const button = document.getElementById("history-export"), status = document.getElementById("history-action-status");
+    button.disabled = true; status.textContent = t("Exporting history…");
+    try { await invoke("export_history"); status.textContent = t("History export started for this account."); }
+    catch (e) { status.textContent = String(e); }
+    finally { button.disabled = false; }
+  });
+  document.getElementById("history-clear").addEventListener("click", async () => {
+    if (!await Dlg.confirm(t("This permanently removes the logged deleted and edited messages for this account."), {
+      title: t("Clear history?"), okLabel: t("Clear"), cancelLabel: t("Cancel"), cancelDefault: true, danger: true
+    })) return;
+    const button = document.getElementById("history-clear"), status = document.getElementById("history-action-status");
+    button.disabled = true; status.textContent = t("Clearing history…");
+    try { await invoke("clear_history"); status.textContent = t("History clear started for this account."); }
+    catch (e) { status.textContent = String(e); }
+    finally { button.disabled = false; }
+  });
   document.querySelector(".prefs").addEventListener("input", updateSaveState);
   document.querySelector(".prefs").addEventListener("change", updateSaveState);
   // These settings apply immediately. Persist only the changed field so edits
@@ -574,7 +627,12 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("record_hotkey").addEventListener("click", () => toggleRecording("hotkey", "record_hotkey"));
   document.getElementById("record_blur_hotkey").addEventListener("click", () => toggleRecording("blur_hotkey", "record_blur_hotkey"));
   document.querySelectorAll(".privacy-range").forEach((input) => input.addEventListener("input", () => updatePrivacyRange(input)));
-  document.getElementById("privacy_idle_on").addEventListener("change", syncPrivacyBlurControls);
+  for (const group of PRIVACY_GROUPS) {
+    document.getElementById("privacy_" + group + "_on")?.addEventListener("change", syncPrivacyBlurControls);
+  }
+  for (const id of ["privacy_blur_on", "privacy_notif", "privacy_no_transition", "privacy_unblur_hover", "privacy_idle_on"]) {
+    document.getElementById(id).addEventListener("change", syncPrivacyBlurControls);
+  }
   document.getElementById("choose_download_dir").addEventListener("click", chooseDownloadDir);
   document.getElementById("reset_download_dir").addEventListener("click", resetDownloadDir);
   document.getElementById("choose_icon").addEventListener("click", chooseIcon);

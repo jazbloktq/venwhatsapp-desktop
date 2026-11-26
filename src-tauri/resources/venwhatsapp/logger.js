@@ -13,6 +13,9 @@
 
   const readSettings = () => { try { return localStorage.getItem(SETTINGS_KEY); } catch { return null; } };
   const settings = Object.assign({ saveMedia: true, lastSeen: 0 }, safeJSON(readSettings()));
+  if (window.__WHATRUST_HISTORY_SAVE_MEDIA_CONFIGURED__ === true) {
+    settings.saveMedia = window.__WHATRUST_HISTORY_SAVE_MEDIA__ !== false;
+  }
   const deletedIds = new Set();
   const cache = new Map(); // id -> record, only deleted or edited ones (used for in-chat rendering)
   const lastMessageByChat = new Map();
@@ -552,6 +555,7 @@
 
   /* nav rail button + fallback */
   .wadl-ico{fill:currentColor;display:block}
+  .wadl-ico.outline{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
   .wadl-nav-wrap{display:flex;justify-content:center;align-items:center;padding:6px 0;width:100%}
   .wadl-nav{position:relative;width:40px;height:40px;border:0;border-radius:50%;background:transparent;color:var(--wadl-icon);cursor:pointer;display:flex;align-items:center;justify-content:center}
   .wadl-nav:hover{background:var(--wadl-hover)}
@@ -564,25 +568,37 @@
   .wadl-fab .wadl-badge{top:-4px;right:-4px}
 
   /* side drawer */
-  #wadl-panel{position:fixed;top:0;right:0;bottom:0;width:min(400px,100vw);z-index:99998;display:flex;flex-direction:column;background:var(--wadl-bg);color:var(--wadl-text);
-    border-left:1px solid var(--wadl-border);box-shadow:-8px 0 30px rgba(0,0,0,.35);font:14px/20px "Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;
+  #wadl-panel{position:fixed;top:0;right:0;bottom:0;width:min(420px,100vw);z-index:99998;display:flex;flex-direction:column;background:var(--wadl-bg);color:var(--wadl-text);
+    border-left:1px solid var(--wadl-border);font:14px/20px "Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;
     transform:translateX(105%);visibility:hidden;transition:transform .22s ease,visibility 0s .22s}
   #wadl-panel.open{transform:none;visibility:visible;transition:transform .22s ease,visibility 0s}
-  .wadl-ph{display:flex;align-items:center;gap:8px;padding:0 10px 0 16px;height:59px;background:var(--wadl-head);flex:none}
+  #wadl-panel *{scrollbar-width:thin;scrollbar-color:rgba(134,150,160,.45) transparent}
+  #wadl-panel *::-webkit-scrollbar{width:7px;height:7px}
+  #wadl-panel *::-webkit-scrollbar-track{background:transparent}
+  #wadl-panel *::-webkit-scrollbar-thumb{background:rgba(134,150,160,.42);border:2px solid transparent;border-radius:999px;background-clip:padding-box}
+  #wadl-panel *::-webkit-scrollbar-thumb:hover{background-color:rgba(134,150,160,.72)}
+  .wadl-ph{display:flex;align-items:center;gap:8px;padding:0 10px 0 16px;height:59px;background:var(--wadl-bg);flex:none}
   .wadl-ph .grow{flex:1;min-width:0}
   .wadl-ph h2{margin:0;font-size:17px;font-weight:500;line-height:20px}
   .wadl-ph p{margin:0;font-size:12.5px;line-height:16px;color:var(--wadl-grey)}
   .wadl-ib{width:36px;height:36px;border:0;border-radius:50%;background:transparent;color:var(--wadl-icon);cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none}
   .wadl-ib:hover{background:var(--wadl-hover)}
   .wadl-ib.sm{width:26px;height:26px}
-  .wadl-search{display:flex;align-items:center;gap:10px;margin:10px 12px 4px;padding:0 12px;height:35px;border-radius:8px;background:var(--wadl-input);color:var(--wadl-icon);flex:none}
+  .wadl-search{position:relative;display:flex;align-items:center;gap:10px;margin:10px 12px 8px;padding:0 8px 0 12px;height:35px;border-radius:8px;background:var(--wadl-input);color:var(--wadl-icon);flex:none}
   .wadl-search input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--wadl-text);font:inherit;font-size:14px}
   .wadl-search input::placeholder{color:var(--wadl-grey)}
-  .wadl-tabs{display:flex;gap:6px;padding:8px 12px 10px;flex:none}
-  .wadl-tab{border:0;border-radius:16px;padding:4px 12px;background:var(--wadl-input);color:var(--wadl-grey);font:inherit;font-size:13.5px;cursor:pointer;display:flex;gap:6px;align-items:center}
-  .wadl-tab:hover{filter:brightness(1.1)}
-  .wadl-tab.on{background:rgba(0,168,132,.2);color:var(--wadl-accent)}
-  .wadl-tab span{font-size:12px;opacity:.85}
+  .wadl-filter-btn{position:relative;width:30px;height:30px;flex:none;display:flex;align-items:center;justify-content:center;border:0;border-radius:50%;padding:0;background:transparent;color:var(--wadl-icon);cursor:pointer}
+  .wadl-filter-btn:hover,.wadl-filter-btn[aria-expanded=true]{background:var(--wadl-hover);color:var(--wadl-text)}
+  .wadl-filter-btn:focus-visible,.wadl-menu-option:focus-visible{outline:2px solid var(--wadl-accent);outline-offset:1px}
+  .wadl-filter-btn.active:after{content:"";position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:var(--wadl-accent);box-shadow:0 0 0 2px var(--wadl-input)}
+  .wadl-filter-menu{position:absolute;z-index:3;top:calc(100% + 6px);right:0;width:210px;padding:6px;border:1px solid var(--wadl-border);border-radius:10px;background:var(--wadl-head);box-shadow:0 8px 24px rgba(0,0,0,.24)}
+  .wadl-filter-menu[hidden]{display:none}
+  .wadl-menu-label{padding:7px 10px 4px;color:var(--wadl-grey);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+  .wadl-menu-option{display:flex;align-items:center;gap:9px;width:100%;min-height:34px;padding:6px 10px;border:0;border-radius:6px;background:transparent;color:var(--wadl-text);font:inherit;font-size:13px;text-align:left;cursor:pointer}
+  .wadl-menu-option:hover{background:var(--wadl-hover)}
+  .wadl-menu-option:after{content:"";width:7px;height:7px;margin-left:auto;border-radius:50%;background:transparent}
+  .wadl-menu-option[aria-checked=true]:after{background:var(--wadl-accent)}
+  .wadl-menu-separator{height:1px;margin:5px 4px;background:var(--wadl-border)}
   #wadl-list{flex:1;overflow:auto;padding:0 8px 8px}
   .wadl-day{position:sticky;top:0;z-index:1;margin:2px 0;padding:6px 8px 4px;font-size:12px;font-weight:500;color:var(--wadl-grey);background:var(--wadl-bg)}
   .wadl-card{display:flex;gap:12px;padding:10px;margin:4px 0;border-radius:10px;background:var(--wadl-card);cursor:pointer;transition:background .12s}
@@ -618,17 +634,6 @@
   .wadl-card a.file{color:var(--wadl-name)}
   .wadl-empty{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;color:var(--wadl-grey);padding:56px 28px;font-size:13.5px}
   .wadl-empty .wadl-ico{width:44px;height:44px;opacity:.5}
-  .wadl-pf{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--wadl-head);flex:none}
-  .wadl-sw{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--wadl-grey);cursor:pointer;flex:1}
-  .wadl-sw input{display:none}
-  .wadl-sw i{width:32px;height:18px;border-radius:9px;background:var(--wadl-sw-off);position:relative;transition:background .15s;flex:none}
-  .wadl-sw i::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .15s}
-  .wadl-sw input:checked + i{background:var(--wadl-accent)}
-  .wadl-sw input:checked + i::after{transform:translateX(14px)}
-  .wadl-btn{border:1px solid var(--wadl-border);border-radius:18px;padding:5px 14px;font:inherit;font-size:13.5px;font-weight:500;cursor:pointer;background:transparent;color:var(--wadl-icon)}
-  .wadl-btn:hover{background:var(--wadl-hover)}
-  .wadl-btn.danger{color:var(--wadl-del)}
-
   /* toasts */
   #wadl-toast{position:fixed;left:76px;bottom:18px;z-index:99999;display:flex;flex-direction:column-reverse;gap:8px;pointer-events:none}
   .wadl-t{pointer-events:auto;cursor:pointer;background:var(--wadl-head);color:var(--wadl-text);border-left:4px solid #e53935;border-radius:8px;padding:8px 12px;max-width:320px;
@@ -637,9 +642,8 @@
   .wadl-t small{display:block;color:var(--wadl-grey);margin-top:2px;white-space:pre-wrap;word-break:break-word}
   `;
 
-  let fab, navWrap, navBtn, navBadge, fabBadge, panel, listEl, subEl, searchEl, toastBox;
-  const tabEls = {};
-  const view = { tab: 'all', q: '' };
+  let fab, navWrap, navBtn, navBadge, fabBadge, panel, listEl, subEl, searchEl, filterBtn, filterMenu, toastBox;
+  const view = { tab: 'all', q: '', scope: 'chat' };
   const expandedHistory = new Set();
   let panelOpen = false, objectUrls = [], lastNavTry = 0;
   let lastJump = null;
@@ -653,14 +657,17 @@
     search: 'M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z',
     copy: 'M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z',
     edit: 'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z',
-    chevron: 'M7 10l5 5 5-5z'
+    chevron: 'M7 10l5 5 5-5z',
+    filter: 'M3 5h18l-7 8v5l-4 2v-7z',
+    settings: 'M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z M12 2v3 M12 19v3 M4.93 4.93l2.12 2.12 M16.95 16.95l2.12 2.12 M2 12h3 M19 12h3 M4.93 19.07l2.12-2.12 M16.95 7.05l2.12-2.12'
   };
-  function icon(name, size) {
+  function icon(name, size, outline) {
     const svg = document.createElementNS(SVG_NS, 'svg');
     svg.setAttribute('viewBox', '0 0 24 24');
     svg.setAttribute('width', String(size || 24));
     svg.setAttribute('height', String(size || 24));
     svg.setAttribute('class', 'wadl-ico');
+    if (outline) svg.classList.add('outline');
     const path = document.createElementNS(SVG_NS, 'path');
     path.setAttribute('d', ICONS[name]);
     svg.appendChild(path);
@@ -731,15 +738,28 @@
   }
 
   /* ----- panel ----- */
+  function syncFilterMenu() {
+    if (!filterMenu || !filterBtn) return;
+    const active = view.tab !== 'all' || view.scope !== 'chat';
+    filterBtn.classList.toggle('active', active);
+    filterBtn.setAttribute('aria-pressed', String(active));
+    for (const option of filterMenu.querySelectorAll('.wadl-menu-option')) {
+      const current = option.dataset.filterGroup === 'type' ? view.tab : view.scope;
+      option.setAttribute('aria-checked', String(option.dataset.filterValue === current));
+    }
+  }
+
   function buildPanel() {
-    const p = el('aside'); p.id = 'wadl-panel'; p.setAttribute('role', 'dialog'); p.setAttribute('aria-label', 'Venwhatsapp');
+    const p = el('aside'); p.id = 'wadl-panel'; p.setAttribute('role', 'dialog'); p.setAttribute('aria-label', 'History');
 
     const head = el('div', 'wadl-ph');
     const titles = el('div', 'grow');
-    titles.appendChild(el('h2', null, 'Venwhatsapp'));
+    titles.appendChild(el('h2', null, 'History'));
     subEl = el('p', null, ''); titles.appendChild(subEl);
+    const manageBtn = el('button', 'wadl-ib'); manageBtn.type = 'button'; manageBtn.title = 'Manage history'; manageBtn.setAttribute('aria-label', 'Manage history'); manageBtn.appendChild(icon('settings', 20, true));
+    manageBtn.onclick = () => window.__TAURI__.core.invoke('open_history_settings').catch((e) => toast('Could not open Settings', String(e), 'edit'));
     const closeBtn = el('button', 'wadl-ib'); closeBtn.title = 'Close (Esc)'; closeBtn.appendChild(icon('close', 22)); closeBtn.onclick = closePanel;
-    head.append(titles, closeBtn);
+    head.append(titles, manageBtn, closeBtn);
 
     const search = el('div', 'wadl-search');
     search.appendChild(icon('search', 18));
@@ -747,27 +767,35 @@
     let t; searchEl.oninput = () => { clearTimeout(t); t = setTimeout(() => { view.q = searchEl.value.trim().toLowerCase(); renderList(); }, 150); };
     search.appendChild(searchEl);
 
-    const tabs = el('div', 'wadl-tabs');
-    for (const [key, label] of [['all', 'All'], ['deleted', 'Deleted'], ['edited', 'Edited']]) {
-      const b = el('button', 'wadl-tab' + (key === view.tab ? ' on' : ''));
-      b.appendChild(el('b', null, label)); b.firstChild.style.fontWeight = '500';
-      const c = el('span', null, '0'); b.appendChild(c);
-      b.onclick = () => { view.tab = key; for (const k in tabEls) tabEls[k].b.classList.toggle('on', k === key); renderList(); };
-      tabEls[key] = { b, c }; tabs.appendChild(b);
-    }
+    filterBtn = el('button', 'wadl-filter-btn'); filterBtn.type = 'button'; filterBtn.title = 'Filter history'; filterBtn.setAttribute('aria-label', 'Filter history'); filterBtn.setAttribute('aria-haspopup', 'menu'); filterBtn.setAttribute('aria-expanded', 'false'); filterBtn.appendChild(icon('filter', 17));
+    filterMenu = el('div', 'wadl-filter-menu'); filterMenu.hidden = true; filterMenu.setAttribute('role', 'menu');
+    const addFilterGroup = (label, group, choices) => {
+      filterMenu.appendChild(el('div', 'wadl-menu-label', label));
+      for (const [value, text] of choices) {
+        const option = el('button', 'wadl-menu-option', text); option.type = 'button'; option.dataset.filterGroup = group; option.dataset.filterValue = value; option.setAttribute('role', 'menuitemradio'); option.setAttribute('aria-checked', 'false');
+        option.onclick = () => {
+          if (group === 'type') view.tab = value; else view.scope = value;
+          syncFilterMenu(); filterMenu.hidden = true; filterBtn.setAttribute('aria-expanded', 'false'); renderList();
+        };
+        filterMenu.appendChild(option);
+      }
+    };
+    addFilterGroup('Message type', 'type', [['all', 'All'], ['deleted', 'Deleted'], ['edited', 'Edited']]);
+    filterMenu.appendChild(el('div', 'wadl-menu-separator'));
+    addFilterGroup('Chats', 'scope', [['chat', 'This chat'], ['all', 'All chats']]);
+    filterBtn.onclick = () => {
+      filterMenu.hidden = !filterMenu.hidden;
+      filterBtn.setAttribute('aria-expanded', String(!filterMenu.hidden));
+      if (!filterMenu.hidden) syncFilterMenu();
+    };
+    search.append(filterBtn, filterMenu);
+    document.addEventListener('pointerdown', (event) => {
+      if (!filterMenu.hidden && !search.contains(event.target)) { filterMenu.hidden = true; filterBtn.setAttribute('aria-expanded', 'false'); }
+    });
 
     listEl = el('div'); listEl.id = 'wadl-list';
 
-    const foot = el('div', 'wadl-pf');
-    const sw = el('label', 'wadl-sw');
-    const cb = el('input'); cb.type = 'checkbox'; cb.checked = !!settings.saveMedia;
-    cb.onchange = () => { settings.saveMedia = cb.checked; saveSettings(); };
-    sw.append(cb, el('i'), el('span', null, 'Save media'));
-    const exp = el('button', 'wadl-btn', 'Export'); exp.onclick = exportJSON;
-    const clr = el('button', 'wadl-btn danger', 'Clear'); clr.onclick = clearLog;
-    foot.append(sw, exp, clr);
-
-    p.append(head, search, tabs, listEl, foot);
+    p.append(head, search, listEl);
     return p;
   }
 
@@ -793,7 +821,8 @@
     document.body.append(fab, panel, toastBox);
 
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && panelOpen) { e.preventDefault(); e.stopPropagation(); closePanel(); }
+      if (e.key === 'Escape' && panelOpen && filterMenu && !filterMenu.hidden) { e.preventDefault(); e.stopPropagation(); filterMenu.hidden = true; filterBtn.setAttribute('aria-expanded', 'false'); filterBtn.focus(); }
+      else if (e.key === 'Escape' && panelOpen) { e.preventDefault(); e.stopPropagation(); closePanel(); }
       else if (e.ctrlKey && e.shiftKey && !e.altKey && e.key.toLowerCase() === 'l') { e.preventDefault(); togglePanel(); }
     }, true);
   }
@@ -843,8 +872,8 @@
 
   async function clearLog() {
     if (!db) { toast('Local log unavailable', 'Close other WhatsApp Web tabs and reload Venwhatsapp before clearing the log.', 'edit'); return; }
-    if (!confirm('Delete the entire Venwhatsapp log? This cannot be undone.')) return;
-    await dbClear(); deletedIds.clear(); cache.clear(); cacheMid.clear(); expandedHistory.clear();
+    try { await dbClear(); } catch (e) { toast('Could not clear history', String(e), 'edit'); return; }
+    deletedIds.clear(); cache.clear(); cacheMid.clear(); expandedHistory.clear();
     document.querySelectorAll('.wadl-row,.wadl-prev,.wadl-inline,.wadl-message-head,.wadl-ghost').forEach((n) => n.remove());
     ghosts.clear(); placement.clear();
     document.querySelectorAll('[data-wadl-hid]').forEach((n) => n.removeAttribute('data-wadl-hid'));
@@ -1237,12 +1266,14 @@
     const all = (await dbAll()).filter((r) => !r.unknownContent && (r.deleted || (r.edits && r.edits.length)));
     const nDel = all.filter((r) => r.deleted).length;
     const nEdit = all.filter((r) => r.edits && r.edits.length).length;
-    tabEls.all.c.textContent = String(all.length);
-    tabEls.deleted.c.textContent = String(nDel);
-    tabEls.edited.c.textContent = String(nEdit);
     subEl.textContent = `${nDel} deleted · ${nEdit} edited`;
 
     let rows = all.filter((r) => view.tab === 'all' || (view.tab === 'deleted' ? r.deleted : (r.edits && r.edits.length)));
+    if (view.scope === 'chat') {
+      const context = chatContext();
+      const chatIds = context && context.chatId ? new Set(chatCandidates({ chatId: context.chatId })) : new Set();
+      rows = rows.filter((r) => chatIds.has(r.chatId));
+    }
     if (view.q) {
       rows = rows.filter((r) => [r.body, r.sender, r.chat, ...(r.edits || []).map((e) => e.body)].some((x) => x && String(x).toLowerCase().includes(view.q)));
     }
@@ -1761,6 +1792,27 @@
         return out;
       }
     };
+    window.venwhatsapp.history = {
+      setSaveMedia(value) { settings.saveMedia = !!value; saveSettings(); },
+      drainQueue() {
+        const queued = window.__venwhatsappHistoryQueue || [];
+        while (queued.length) {
+          const action = queued.shift();
+          if (action === 'export') exportJSON().catch((e) => toast('Could not export history', String(e), 'edit'));
+          else if (action === 'clear') clearLog().catch((e) => toast('Could not clear history', String(e), 'edit'));
+        }
+      }
+    };
+    window.venwhatsapp.history.drainQueue();
+    const syncHistorySaveMedia = () => {
+      const invoke = window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke;
+      if (typeof invoke !== 'function') return;
+      invoke('sync_history_save_media', { saveMedia: !!settings.saveMedia })
+        .then(() => window.removeEventListener('focus', syncHistorySaveMedia))
+        .catch(() => {});
+    };
+    syncHistorySaveMedia();
+    window.addEventListener('focus', syncHistorySaveMedia);
     log(db ? `ready — restored ${nDel} deleted and ${nEdit} edited messages from the log` : 'UI ready, but the local database is unavailable');
   }
 

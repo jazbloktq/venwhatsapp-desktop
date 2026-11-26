@@ -10,7 +10,7 @@
   </head>
   <body>
     <header class="app-header"><button id="back-to-chat" type="button" class="secondary back-button" aria-label="Voltar ao WhatsApp" title="Voltar ao WhatsApp" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5 M12 5l-7 7 7 7"/></svg><span>Voltar ao WhatsApp</span></button><strong>Configurações</strong></header>
-    <div class="settings-layout"><nav class="settings-nav" aria-label="Configurações"><a href="#sec-contas">Contas</a><a href="#sec-notificacoes">Notificações</a><a href="#sec-aparencia">Aparência</a><a href="#sec-seguranca">Segurança</a><a href="#sec-sistema">Inicialização</a><a href="#sec-rede">Rede</a><a href="#sec-atalhos">Atalhos</a><a href="#sec-diagnostico">Diagnóstico</a><a class="nav-about" href="#sec-atualizacoes">Sobre o Venwhatsapp</a></nav>
+    <div class="settings-layout"><nav class="settings-nav" aria-label="Configurações"><a href="#sec-contas">Contas</a><a href="#sec-notificacoes">Notificações</a><a href="#sec-aparencia">Aparência</a><a href="#sec-seguranca">Segurança</a><a href="#sec-sistema">Inicialização</a><a href="#sec-rede">Rede</a><a href="#sec-atalhos">Atalhos</a><a href="#sec-historico">Histórico</a><a href="#sec-diagnostico">Diagnóstico</a><a class="nav-about" href="#sec-atualizacoes">Sobre o Venwhatsapp</a></nav>
     <!-- Local preferences use familiar WhatsApp rows: titled
          groups of boxed-list rows, a title + subtitle on the left and the control
          on the right. Element ids are what main.js uses; keep them stable. -->
@@ -189,35 +189,7 @@
       <section class="group" id="sec-seguranca">
         <h2 class="group-title">Segurança</h2>
 
-        <details class="privacy-disclosure" id="privacy-blur-disclosure">
-          <summary>Privacy blur</summary>
-          <p class="group-note">Choose what is blurred in every account. Changes apply to open WhatsApp windows when you save.</p>
-          <div class="boxed-list privacy-list">
-            <label class="row privacy-option"><span class="row-text"><span class="row-title">Enable privacy blur</span></span><input type="checkbox" class="switch" id="privacy_blur_on" /></label>
-            <label class="row privacy-option"><span class="row-text"><span class="row-title">All messages in chat</span></span><input type="checkbox" class="switch" id="privacy_chat_on" /></label>
-            <div class="privacy-slider-row"><label for="privacy_chat_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_chat_amt" min="1" max="30" step="1" /><output id="privacy_chat_amt_output" for="privacy_chat_amt"></output></div>
-            <label class="row privacy-option"><span class="row-text"><span class="row-title">Last message previews</span></span><input type="checkbox" class="switch" id="privacy_preview_on" /></label>
-            <div class="privacy-slider-row"><label for="privacy_preview_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_preview_amt" min="1" max="30" step="1" /><output id="privacy_preview_amt_output" for="privacy_preview_amt"></output></div>
-            <label class="row privacy-option"><span class="row-text"><span class="row-title">Media previews</span></span><input type="checkbox" class="switch" id="privacy_media_on" /></label>
-            <div class="privacy-slider-row"><label for="privacy_media_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_media_amt" min="1" max="30" step="1" /><output id="privacy_media_amt_output" for="privacy_media_amt"></output></div>
-            <label class="row privacy-option"><span class="row-text"><span class="row-title">Media gallery</span></span><input type="checkbox" class="switch" id="privacy_gallery_on" /></label>
-            <div class="privacy-slider-row"><label for="privacy_gallery_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_gallery_amt" min="1" max="30" step="1" /><output id="privacy_gallery_amt_output" for="privacy_gallery_amt"></output></div>
-            <label class="row privacy-option"><span class="row-text"><span class="row-title">Text input</span></span><input type="checkbox" class="switch" id="privacy_input_on" /></label>
-            <label class="row privacy-option"><span class="row-text"><span class="row-title">Profile pictures</span></span><input type="checkbox" class="switch" id="privacy_avatars_on" /></label>
-            <div class="privacy-slider-row"><label for="privacy_avatars_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_avatars_amt" min="1" max="30" step="1" /><output id="privacy_avatars_amt_output" for="privacy_avatars_amt"></output></div>
-            <label class="row privacy-option"><span class="row-text"><span class="row-title">Group and contact names</span></span><input type="checkbox" class="switch" id="privacy_names_on" /></label>
-            <div class="privacy-slider-row"><label for="privacy_names_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_names_amt" min="1" max="30" step="1" /><output id="privacy_names_amt_output" for="privacy_names_amt"></output></div>
-            <label class="row privacy-option"><span class="row-text"><span class="row-title">Hide notification contents</span></span><input type="checkbox" class="switch" id="privacy_notif" /></label>
-            <label class="row privacy-option"><span class="row-text"><span class="row-title">No transition delay</span></span><input type="checkbox" class="switch" id="privacy_no_transition" /></label>
-            <label class="row privacy-option"><span class="row-text"><span class="row-title">Unblur everything when hovering over the app window</span></span><input type="checkbox" class="switch" id="privacy_unblur_hover" /></label>
-            <label class="row privacy-option"><span class="row-text"><span class="row-title">Blur everything when idle</span></span><input type="checkbox" class="switch" id="privacy_idle_on" /></label>
-            <div id="privacy_idle_controls" hidden>
-              <div class="privacy-slider-row"><label for="privacy_idle_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_idle_amt" min="1" max="30" step="1" /><output id="privacy_idle_amt_output" for="privacy_idle_amt"></output></div>
-              <div class="privacy-slider-row"><label for="privacy_idle_secs">Idle time</label><input class="privacy-range" type="range" id="privacy_idle_secs" min="5" max="600" step="5" /><output id="privacy_idle_secs_output" for="privacy_idle_secs"></output></div>
-            </div>
-          </div>
-        </details>
-
+        <h3>Bloqueio do aplicativo</h3>
         <div id="lock-disabled">
           <div class="boxed-list">
             <label class="row entry-row">
@@ -263,6 +235,70 @@
 
         <p class="group-note">O bloqueio protege o acesso às janelas do Venwhatsapp. Ele
           <strong>não</strong> criptografa os dados no disco.</p>
+
+        <details class="privacy-disclosure" id="privacy-blur-disclosure">
+          <summary>Privacy blur</summary>
+          <div class="privacy-content">
+            <div class="privacy-content-rail">
+              <p class="privacy-description">Choose what is blurred in every account. Changes apply to open WhatsApp windows when you save.</p>
+              <div class="boxed-list privacy-list">
+                <label class="row privacy-option" id="privacy_master_row"><span class="row-text"><span class="row-title">Enable privacy blur</span></span><input type="checkbox" class="switch" id="privacy_blur_on" /></label>
+                <div class="privacy-option-group">
+                  <label class="row privacy-option"><span class="row-text"><span class="row-title">All messages in chat</span></span><input type="checkbox" class="switch" id="privacy_chat_on" /></label>
+                  <div class="privacy-slider-row"><label for="privacy_chat_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_chat_amt" min="1" max="30" step="1" /><output id="privacy_chat_amt_output" for="privacy_chat_amt"></output></div>
+                </div>
+                <div class="privacy-option-group">
+                  <label class="row privacy-option"><span class="row-text"><span class="row-title">Last message previews</span></span><input type="checkbox" class="switch" id="privacy_preview_on" /></label>
+                  <div class="privacy-slider-row"><label for="privacy_preview_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_preview_amt" min="1" max="30" step="1" /><output id="privacy_preview_amt_output" for="privacy_preview_amt"></output></div>
+                </div>
+                <div class="privacy-option-group">
+                  <label class="row privacy-option"><span class="row-text"><span class="row-title">Media previews</span></span><input type="checkbox" class="switch" id="privacy_media_on" /></label>
+                  <div class="privacy-slider-row"><label for="privacy_media_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_media_amt" min="1" max="30" step="1" /><output id="privacy_media_amt_output" for="privacy_media_amt"></output></div>
+                </div>
+                <div class="privacy-option-group">
+                  <label class="row privacy-option"><span class="row-text"><span class="row-title">Media gallery</span></span><input type="checkbox" class="switch" id="privacy_gallery_on" /></label>
+                  <div class="privacy-slider-row"><label for="privacy_gallery_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_gallery_amt" min="1" max="30" step="1" /><output id="privacy_gallery_amt_output" for="privacy_gallery_amt"></output></div>
+                </div>
+                <label class="row privacy-option"><span class="row-text"><span class="row-title">Text input</span></span><input type="checkbox" class="switch" id="privacy_input_on" /></label>
+                <div class="privacy-option-group">
+                  <label class="row privacy-option"><span class="row-text"><span class="row-title">Profile pictures</span></span><input type="checkbox" class="switch" id="privacy_avatars_on" /></label>
+                  <div class="privacy-slider-row"><label for="privacy_avatars_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_avatars_amt" min="1" max="30" step="1" /><output id="privacy_avatars_amt_output" for="privacy_avatars_amt"></output></div>
+                </div>
+                <div class="privacy-option-group">
+                  <label class="row privacy-option"><span class="row-text"><span class="row-title">Group and contact names</span></span><input type="checkbox" class="switch" id="privacy_names_on" /></label>
+                  <div class="privacy-slider-row"><label for="privacy_names_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_names_amt" min="1" max="30" step="1" /><output id="privacy_names_amt_output" for="privacy_names_amt"></output></div>
+                </div>
+                <label class="row privacy-option"><span class="row-text"><span class="row-title">Hide notification contents</span></span><input type="checkbox" class="switch" id="privacy_notif" /></label>
+                <label class="row privacy-option"><span class="row-text"><span class="row-title">No transition delay</span></span><input type="checkbox" class="switch" id="privacy_no_transition" /></label>
+                <label class="row privacy-option"><span class="row-text"><span class="row-title">Unblur everything when hovering over the app window</span></span><input type="checkbox" class="switch" id="privacy_unblur_hover" /></label>
+                <div class="privacy-option-group">
+                  <label class="row privacy-option"><span class="row-text"><span class="row-title">Blur everything when idle</span></span><input type="checkbox" class="switch" id="privacy_idle_on" /></label>
+                  <div id="privacy_idle_controls" class="privacy-idle-controls" hidden>
+                    <div class="privacy-slider-row"><label for="privacy_idle_amt">Blur amount</label><input class="privacy-range" type="range" id="privacy_idle_amt" min="1" max="30" step="1" /><output id="privacy_idle_amt_output" for="privacy_idle_amt"></output></div>
+                    <div class="privacy-slider-row"><label for="privacy_idle_secs">Idle time</label><input class="privacy-range" type="range" id="privacy_idle_secs" min="5" max="600" step="5" /><output id="privacy_idle_secs_output" for="privacy_idle_secs"></output></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </details>
+      </section>
+      <section class="group" id="sec-historico">
+        <h2 class="group-title">Histórico</h2>
+        <h3>Captura de mídia</h3>
+        <div class="boxed-list">
+          <label class="row">
+            <span class="row-text"><span class="row-title">Salvar mídia</span><span class="row-subtitle">Salva mídia anexada às mensagens excluídas ou editadas no histórico.</span></span>
+            <input type="checkbox" class="switch" id="history_save_media" />
+          </label>
+        </div>
+        <h3>Ações instantâneas</h3>
+        <p class="group-note">Exportar e limpar o histórico são ações imediatas e não dependem do botão Salvar.</p>
+        <div class="boxed-list">
+          <div class="row"><span class="row-text"><span class="row-title">Exportar histórico</span><span class="row-subtitle">Baixa um arquivo JSON com o histórico desta conta.</span></span><button type="button" class="secondary" id="history-export">Exportar</button></div>
+          <div class="row"><span class="row-text"><span class="row-title">Limpar histórico</span><span class="row-subtitle">Remove permanentemente as mensagens excluídas ou editadas registradas nesta conta.</span></span><button type="button" class="secondary history-clear" id="history-clear">Limpar</button></div>
+        </div>
+        <p id="history-action-status" class="group-note" role="status" aria-live="polite"></p>
       </section>
       <section class="group" id="sec-diagnostico"><h2 class="group-title">Diagnóstico de notificações</h2>
       <div class="boxed-list"><div class="row"><span class="row-text"><span class="row-title">Verificar avisos do Windows</span><span class="row-subtitle">O teste confirma o envio; confira se o Windows exibe o banner.</span></span><button id="test-notification" type="button">Testar</button></div><div class="row"><span class="row-text">Permissões e Não perturbe</span><button id="windows-notifications" class="secondary" type="button">Abrir no Windows</button></div></div>

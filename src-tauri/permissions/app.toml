@@ -19,6 +19,16 @@ commands.allow = [
 ]
 
 [[permission]]
+identifier = "allow-history-settings"
+description = "Read and manage the current account's message history from trusted Settings UI."
+commands.allow = ["get_history_save_media", "set_history_save_media", "export_history", "clear_history"]
+
+[[permission]]
+identifier = "allow-history-bridge"
+description = "Open the trusted History settings tab and sync only the calling account's legacy media preference."
+commands.allow = ["open_history_settings", "sync_history_save_media"]
+
+[[permission]]
 identifier = "allow-lock-commands"
 description = "Read lock status and unlock or reset from the bundled lock screen."
 commands.allow = ["get_lock_status", "unlock_password", "unlock_biometric", "reset_app_lock"]

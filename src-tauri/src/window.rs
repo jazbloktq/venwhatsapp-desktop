@@ -168,6 +168,22 @@ macro_rules! account_webview {
             // so the two never stack or drift apart.
             .zoom_hotkeys_enabled(false)
             .initialization_script(crate::i18n::init_script())
+            .initialization_script({
+                let id = crate::accounts::id_from_label(&$label);
+                let preference = id.and_then(|id| {
+                    crate::accounts::load($app)
+                        .accounts
+                        .into_iter()
+                        .find(|account| account.id == id)
+                });
+                let save_media = preference
+                    .as_ref()
+                    .is_none_or(|account| account.history_save_media);
+                let configured = preference
+                    .as_ref()
+                    .is_some_and(|account| account.history_save_media_configured);
+                format!("window.__WHATRUST_HISTORY_SAVE_MEDIA__={save_media};window.__WHATRUST_HISTORY_SAVE_MEDIA_CONFIGURED__={configured};")
+            })
             .initialization_script(if cfg!(windows) {
                 format!("window.__WHATRUST_WINDOWS__=true;window.__whatrustNotificationEpoch={};window.__whatrustLocked={};",$app.state::<crate::notify::Recent>().epoch(),!crate::lock::is_unlocked($app))
             } else if crate::sessions::enabled() {

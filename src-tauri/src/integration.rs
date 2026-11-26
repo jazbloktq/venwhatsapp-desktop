@@ -284,6 +284,125 @@ pub async fn open_app_panel(window: Webview, app: AppHandle) -> Result<(), Strin
     }
     Ok(())
 }
+
+/// Open the trusted settings panel directly on History from the logger's gear.
+#[tauri::command]
+pub async fn open_history_settings(window: Webview, app: AppHandle) -> Result<(), String> {
+    remote(&window)?;
+    if crate::sessions::enabled() {
+        crate::sessions::open_panel(&app, Some(window.window().label()))
+            .map_err(|e| e.to_string())?;
+    } else {
+        crate::window::open_settings_window(&app);
+    }
+    if let Some(settings) = app.get_webview("settings") {
+        let _ = settings.eval(
+            r##"(function(){let tries=0;const timer=setInterval(function(){const link=document.querySelector('.settings-nav a[href="#sec-historico"]');if(link){clearInterval(timer);link.click()}else if(++tries>=80){clearInterval(timer)}},50)})()"##,
+        );
+    }
+    Ok(())
+}
+
+fn history_target_label(app: &AppHandle) -> Result<String, String> {
+    let id = crate::sessions::history_account_id(app)
+        .ok_or_else(|| "No active WhatsApp account is available.".to_string())?;
+    let label = accounts::window_label(&id);
+    if app.get_webview(&label).is_none() {
+        return Err("Open the WhatsApp account before managing its history.".into());
+    }
+    Ok(label)
+}
+
+#[tauri::command]
+pub fn get_history_save_media(window: Webview, app: AppHandle) -> Result<bool, String> {
+    local(&window, &app)?;
+    let Some(id) = crate::sessions::history_account_id(&app) else {
+        return Ok(true);
+    };
+    Ok(accounts::load(&app)
+        .accounts
+        .into_iter()
+        .find(|account| account.id == id)
+        .is_none_or(|account| account.history_save_media))
+}
+
+/// Import the legacy per-account browser preference once, without allowing the
+/// remote page to overwrite a value the user has already set in Settings.
+#[tauri::command]
+pub fn sync_history_save_media(
+    window: Webview,
+    app: AppHandle,
+    save_media: bool,
+) -> Result<(), String> {
+    remote(&window)?;
+    let Some(id) = accounts::id_from_label(window.label()) else {
+        return Err("unknown account".into());
+    };
+    let _guard = accounts::lock_mutations();
+    let mut file = accounts::load(&app);
+    let Some(account) = file.accounts.iter_mut().find(|account| account.id == id) else {
+        return Err("unknown account".into());
+    };
+    if !account.history_save_media_configured {
+        account.history_save_media = save_media;
+        account.history_save_media_configured = true;
+        accounts::save(&app, &file).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn set_history_save_media(
+    window: Webview,
+    app: AppHandle,
+    save_media: bool,
+) -> Result<(), String> {
+    local(&window, &app)?;
+    let id = crate::sessions::history_account_id(&app)
+        .ok_or_else(|| "No active WhatsApp account is available.".to_string())?;
+    let label = accounts::window_label(&id);
+    {
+        let _guard = accounts::lock_mutations();
+        let mut file = accounts::load(&app);
+        let Some(account) = file.accounts.iter_mut().find(|account| account.id == id) else {
+            return Err("unknown account".into());
+        };
+        account.history_save_media = save_media;
+        account.history_save_media_configured = true;
+        accounts::save(&app, &file).map_err(|e| e.to_string())?;
+    }
+    if let Some(view) = app.get_webview(&label) {
+        let value = if save_media { "true" } else { "false" };
+        view.eval(format!(
+            "(()=>{{let s={{}};try{{s=JSON.parse(localStorage.getItem('wadl-settings')||'{{}}')||{{}}}}catch{{}}s.saveMedia={value};localStorage.setItem('wadl-settings',JSON.stringify(s));if(window.venwhatsapp?.history)window.venwhatsapp.history.setSaveMedia({value})}})()"
+        ))
+        .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+fn queue_history_action(app: &AppHandle, action: &str) -> Result<(), String> {
+    let label = history_target_label(app)?;
+    let view = app.get_webview(&label).expect("history target checked");
+    let action = serde_json::to_string(action).map_err(|e| e.to_string())?;
+    view.eval(format!(
+        "(()=>{{const q=window.__venwhatsappHistoryQueue||(window.__venwhatsappHistoryQueue=[]);q.push({action});window.venwhatsapp?.history?.drainQueue()}})()"
+    ))
+    .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn export_history(window: Webview, app: AppHandle) -> Result<(), String> {
+    local(&window, &app)?;
+    queue_history_action(&app, "export")
+}
+
+#[tauri::command]
+pub fn clear_history(window: Webview, app: AppHandle) -> Result<(), String> {
+    local(&window, &app)?;
+    queue_history_action(&app, "clear")
+}
+
 #[tauri::command]
 pub fn close_app_panel(window: Webview, app: AppHandle) -> Result<(), String> {
     local(&window, &app)?;

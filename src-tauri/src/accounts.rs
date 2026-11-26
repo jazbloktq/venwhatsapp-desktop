@@ -36,6 +36,16 @@ pub struct Account {
     pub order: u32,
     #[serde(default)]
     pub store_uuid: Option<[u8; 16]>,
+    /// Whether deleted and edited message media is saved for this account.
+    #[serde(default = "default_history_save_media")]
+    pub history_save_media: bool,
+    /// False until a legacy account's existing browser preference has been imported.
+    #[serde(default)]
+    pub history_save_media_configured: bool,
+}
+
+fn default_history_save_media() -> bool {
+    true
 }
 
 /// The persisted accounts file. `next_seq` is a monotonic counter so a removed-then
@@ -60,6 +70,8 @@ impl Default for AccountsFile {
                 name_customized: false,
                 order: 0,
                 store_uuid: None,
+                history_save_media: true,
+                history_save_media_configured: false,
             }],
             next_seq: 1,
             startup_account: None,
@@ -89,6 +101,8 @@ pub fn add(f: &mut AccountsFile, name: &str) -> Account {
         name_customized: false,
         order,
         store_uuid: Some(gen_store_uuid()),
+        history_save_media: true,
+        history_save_media_configured: false,
     };
     f.accounts.push(acct.clone());
     acct
