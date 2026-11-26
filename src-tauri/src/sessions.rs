@@ -445,7 +445,7 @@ fn layout_on_main(app: &AppHandle, parent: &str) {
         if !visible {
             set_view_visible(app, &view, false);
         } else if label.starts_with("wa-") {
-            if !panel_open && active.as_deref() == Some(label.as_str()) {
+            if active.as_deref() == Some(label.as_str()) {
                 set_view_visible(app, &view, true);
             } else {
                 set_view_visible(app, &view, false);
@@ -829,11 +829,6 @@ pub fn open_panel(app: &AppHandle, parent: Option<&str>) -> tauri::Result<()> {
     };
     prepare_view(&panel);
     let _ = panel.eval(theme_script);
-    for (l, v) in app.webviews() {
-        if l.starts_with("wa-") && v.window().label() == owner.label() {
-            set_view_visible(app, &v, false);
-        }
-    }
     *crate::lock::guard(&state(app).panel_parent) = Some(owner.label().into());
     layout(app, owner.label());
     // A worker can finish constructing a panel after a lock request.
