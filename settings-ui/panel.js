@@ -2,8 +2,39 @@
 (function(){
   const invoke=window.__TAURI__.core.invoke, isWindows=/Win/.test(navigator.platform||navigator.userAgent);
   const back=document.getElementById("back-to-chat"),embedded=isWindows||!!window.__WHATRUST_SINGLE__;back.hidden=false;
+  let panelAnimation=null,panelEpoch=0;
+  const panelFrames={from:{opacity:0,transform:"translateY(14px) scale(.99)"},to:{opacity:1,transform:"translateY(0) scale(1)"}};
+  function cancelPanelAnimation(){panelEpoch++;if(panelAnimation){panelAnimation.cancel();panelAnimation=null;}}
+  const panelMotion={
+    open(){
+      cancelPanelAnimation();
+      const epoch=panelEpoch,root=document.documentElement,body=document.body;
+      root.classList.remove("panel-open");void body.offsetHeight;
+      if(!embedded||matchMedia("(prefers-reduced-motion: reduce)").matches||!body.animate){root.classList.add("panel-open");return;}
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        if(epoch!==panelEpoch)return;
+        root.classList.add("panel-open");
+        panelAnimation=body.animate([panelFrames.from,panelFrames.to],{duration:280,easing:"cubic-bezier(.2,.8,.2,1)",fill:"both"});
+      }));
+    },
+    close(){
+      cancelPanelAnimation();
+      const epoch=panelEpoch,root=document.documentElement,body=document.body;
+      root.classList.remove("panel-open");
+      if(!embedded||matchMedia("(prefers-reduced-motion: reduce)").matches||!body.animate)return Promise.resolve(true);
+      const animation=body.animate([panelFrames.to,panelFrames.from],{duration:260,easing:"cubic-bezier(.2,.8,.2,1)",fill:"both"});
+      panelAnimation=animation;
+      return animation.finished.then(()=>epoch===panelEpoch).catch(()=>false);
+    }
+  };
+  window.__venwhatsappSettingsPanelMotion=panelMotion;
+  const privacy=document.getElementById("privacy-blur-disclosure"),privacyContent=privacy?.querySelector(".privacy-content");
+  privacy?.querySelector(":scope > summary")?.addEventListener("click",()=>requestAnimationFrame(()=>{
+    if(!privacy.open){privacyContent?.classList.remove("privacy-content-enter");return;}
+    privacyContent?.classList.remove("privacy-content-enter");void privacyContent?.offsetHeight;privacyContent?.classList.add("privacy-content-enter");
+  }));
   let diagnosticsBusy=false, timer;
-  async function close(){if(!document.getElementById("save").disabled && !await Dlg.confirm("As alterações ainda não foram salvas.",{title:"Voltar sem salvar?",okLabel:"Voltar",cancelDefault:true}))return;document.documentElement.classList.remove("panel-open");if(embedded&&!matchMedia("(prefers-reduced-motion: reduce)").matches){await new Promise(resolve=>setTimeout(resolve,300));if(document.documentElement.classList.contains("panel-open"))return;}if(embedded)await invoke("close_app_panel");else await window.__TAURI__.window.getCurrentWindow().close();}
+  async function close(){if(!document.getElementById("save").disabled && !await Dlg.confirm("As alterações ainda não foram salvas.",{title:"Voltar sem salvar?",okLabel:"Voltar",cancelDefault:true}))return;if(embedded){if(!await panelMotion.close())return;await invoke("close_app_panel");}else await window.__TAURI__.window.getCurrentWindow().close();}
   back.onclick=close;
   document.addEventListener("keydown",e=>{if(e.key!=="Escape"||e.defaultPrevented)return;const target=e.target;if(target.matches('input[type="text"],input[type="password"],input[type="number"],textarea,[contenteditable="true"]')){e.preventDefault();target.blur();return;}if(!document.querySelector('.dlg-backdrop,dialog[open],.account-actions[data-open=true]')){e.preventDefault();close();}});
   const names={pending:"Aguardando envio",submitted:"Enviada ao Windows; exibição não confirmada",failed:"Falha no envio",suppressed:"Não enviada",activated:"Aviso aberto",dismissed:"Aviso encerrado"};

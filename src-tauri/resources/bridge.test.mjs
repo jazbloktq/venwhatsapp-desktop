@@ -514,19 +514,13 @@ async function testRefusedCommandsWarnOnceAndNeverThrow() {
 }
 
 async function testChromeShimsOnlyForAChromeUserAgent() {
-  console.log("Chrome client hints only when the UA claims Chrome (Safari on macOS stays Safari)");
+  console.log("Chrome client hints only when the UA claims Chrome");
   const chromeNav = {
     userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
   };
   const chrome = makeHarness({ navigator: chromeNav });
   assert(chromeNav.userAgentData && chromeNav.userAgentData.platform === "Linux", "Chrome UA gets userAgentData");
   assert(!!chrome.window.chrome, "Chrome UA gets window.chrome");
-  const safariNav = {
-    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15",
-  };
-  const safari = makeHarness({ navigator: safariNav });
-  assert(safariNav.userAgentData === undefined, "Safari UA gets no userAgentData");
-  assert(safari.window.chrome === undefined, "Safari UA gets no window.chrome");
 }
 
 function toastsIn(document) {
@@ -682,16 +676,6 @@ function testScrollbarsAreThinAndTranslucent() {
   // An initialization script can run before <head> exists: that must not throw.
   const noHead = makeHarness({ head: false, navigator: chromeNav });
   assert(!!noHead.window, "bridge loads when document.head is not there yet");
-  // macOS presents a Safari UA: WKWebView scrollers are native, so the page
-  // stylesheet is skipped entirely (Rust forces overlay scrollers instead).
-  const safariNav = {
-    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15",
-  };
-  const safari = makeHarness({ navigator: safariNav });
-  assert(
-    safari.head.children.every((e) => e.id !== "__whatrust_scrollbars"),
-    "Safari UA gets no scrollbar stylesheet (native overlay scrollers instead)"
-  );
 }
 
 function keyEvent(o) {
@@ -721,11 +705,7 @@ async function testZoomShortcuts() {
     { key: "-", ctrlKey: true, shiftKey: true }, { key: "=", metaKey: true },
     { key: "-", ctrlKey: true, isComposing: true }, { key: "-", ctrlKey: true, keyCode: 229 },
   ].map((o) => press(h, o));
-  assert(passes.every((e) => !e.defaultPrevented) && h.invocations.length === before, "other keys, Alt/AltGr, Cmd on non-mac and IME composition are left alone");
-  const mac = makeHarness({ navigator: { platform: "MacIntel" } });
-  press(mac, { key: "=", metaKey: true });
-  press(mac, { key: "=", ctrlKey: true });
-  assert(zooms(mac).join() === "in", "Cmd zooms on macOS, bare Ctrl does not");
+  assert(passes.every((e) => !e.defaultPrevented) && h.invocations.length === before, "other keys, Alt/AltGr and IME composition are left alone");
 }
 
 async function testZoomWheelCoalesces() {

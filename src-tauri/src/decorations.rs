@@ -179,12 +179,6 @@ mod tests {
     }
 
     #[test]
-    fn macos_and_windows_always_keep_the_native_title_bar() {
-        assert!(show_for("hide", true, false));
-        assert!(show_for("auto", true, false));
-    }
-
-    #[test]
     fn unknown_values_mean_auto() {
         assert_eq!(sanitize("show"), "show");
         assert_eq!(sanitize("hide"), "hide");

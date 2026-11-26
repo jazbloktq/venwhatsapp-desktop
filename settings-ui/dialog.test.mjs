@@ -2,11 +2,9 @@
 // window.alert/confirm/prompt. Run: node settings-ui/dialog.test.mjs
 // Exits nonzero on failure. Same standalone pattern as bridge.test.mjs.
 //
-// These exist because the native dialogs silently do nothing under WKWebView
-// (wry implements no WKUIDelegate JS panel methods), which is invisible on
-// Windows and Linux: a regression here would look like a dead button on macOS
-// only. The harness stubs the DOM surface dialog.js touches, evals the real
-// script, and drives it through clicks and key events.
+// The WebView does not implement JavaScript panel methods natively. The harness
+// stubs the DOM surface dialog.js touches, evals the real script, and drives it
+// through clicks and key events.
 
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";

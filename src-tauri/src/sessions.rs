@@ -813,7 +813,7 @@ pub fn open_panel(app: &AppHandle, parent: Option<&str>) -> tauri::Result<()> {
         owner.add_child(
             WebviewBuilder::new("settings", WebviewUrl::App("index.html".into()))
                 .initialization_script(crate::i18n::init_script())
-                .initialization_script("document.documentElement.classList.add('embedded-panel');document.addEventListener('DOMContentLoaded',function(){requestAnimationFrame(function(){requestAnimationFrame(function(){document.documentElement.classList.add('panel-open')})})},{once:true});")
+                .initialization_script("document.documentElement.classList.add('embedded-panel');")
                 .initialization_script(if cfg!(windows) {
                     ""
                 } else {
@@ -841,9 +841,8 @@ pub fn open_panel(app: &AppHandle, parent: Option<&str>) -> tauri::Result<()> {
         crate::lock::show_lock_window(app);
         return Ok(());
     }
-    let _ = panel.eval("document.documentElement.classList.remove('panel-open')");
     set_view_visible(app, &panel, true);
-    let _ = panel.eval("(function(){function open(){requestAnimationFrame(function(){requestAnimationFrame(function(){document.documentElement.classList.add('panel-open')})})}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',open,{once:true});else open()})()");
+    let _ = panel.eval("(function(){var attempts=0;function open(){var motion=window.__venwhatsappSettingsPanelMotion;if(motion){motion.open();return;}if(++attempts<100)setTimeout(open,25);}open();})()");
     let _ = owner.show();
     let _ = owner.unminimize();
     let _ = owner.set_focus();

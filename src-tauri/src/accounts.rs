@@ -365,7 +365,6 @@ mod tests {
         assert_eq!(f, before);
         reorder(&mut f, &[other.id.clone(), "default".into()]).unwrap();
         assert_eq!(startup_account(&f).unwrap().id, other.id);
-        assert_eq!(f.accounts[1].store_uuid, before.accounts[1].store_uuid);
     }
 
     #[test]
@@ -377,7 +376,6 @@ mod tests {
             serde_json::from_str(&serde_json::to_string(&f).unwrap()).unwrap();
         assert_eq!(startup_account(&restored), Some(&second));
         assert_eq!(restored.accounts[0].id, "default");
-        assert_eq!(restored.accounts[0].store_uuid, None);
     }
 
     #[test]
@@ -423,7 +421,6 @@ mod tests {
         assert_eq!(a.id, "default");
         assert_eq!(a.name, "WhatsApp");
         assert_eq!(a.order, 0);
-        assert_eq!(a.store_uuid, None);
         assert_eq!(f.next_seq, 1);
     }
 
@@ -441,29 +438,6 @@ mod tests {
         assert_eq!(b.order, 2);
         assert_eq!(f.next_seq, 3);
         assert_eq!(f.accounts.len(), 3);
-    }
-
-    #[test]
-    fn added_account_has_non_nil_store_uuid() {
-        let mut f = AccountsFile::default();
-        let a = add(&mut f, "Work");
-        let uuid = a.store_uuid.expect("non-default account has a store_uuid");
-        assert_ne!(uuid, [0u8; 16]);
-    }
-
-    #[test]
-    fn gen_store_uuid_is_non_nil_and_v4_shaped() {
-        let b = gen_store_uuid();
-        assert_ne!(b, [0u8; 16]);
-        assert_eq!(b[6] & 0xF0, 0x40, "version nibble must be 4");
-        assert_eq!(b[8] & 0xC0, 0x80, "variant bits must be 10xxxxxx");
-    }
-
-    #[test]
-    fn gen_store_uuid_differs_across_calls() {
-        let a = gen_store_uuid();
-        let b = gen_store_uuid();
-        assert_ne!(a, b);
     }
 
     #[test]
@@ -522,13 +496,12 @@ mod tests {
 
     #[test]
     fn partial_json_fills_defaults() {
-        // Account without store_uuid (serde default = None) inside a custom file.
+        // Account fields missing from a custom file use their serde defaults.
         let f: AccountsFile = serde_json::from_str(
             r#"{"accounts":[{"id":"default","name":"WhatsApp","order":0}],"next_seq":5}"#,
         )
         .unwrap();
         assert_eq!(f.accounts.len(), 1);
-        assert_eq!(f.accounts[0].store_uuid, None);
         assert_eq!(f.next_seq, 5);
     }
 
@@ -536,14 +509,6 @@ mod tests {
     fn empty_json_gives_default() {
         let f: AccountsFile = serde_json::from_str("{}").unwrap();
         assert_eq!(f, AccountsFile::default());
-    }
-
-    #[test]
-    fn default_account_store_uuid_is_none_after_roundtrip() {
-        let f = AccountsFile::default();
-        let json = serde_json::to_string(&f).unwrap();
-        let back: AccountsFile = serde_json::from_str(&json).unwrap();
-        assert_eq!(back.accounts[0].store_uuid, None);
     }
 
     #[test]

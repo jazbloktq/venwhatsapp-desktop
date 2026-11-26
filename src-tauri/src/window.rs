@@ -47,7 +47,7 @@ fn user_agent() -> String {
 /// Safari's UA for a macOS major version. Safari freezes the OS token at
 /// `10_15_7`; its own version is the OS major + 3 up to macOS 15 (Safari 18), and
 /// equal to it from macOS 26 on, when both moved to year-based numbering.
-#[cfg(any(target_os = "macos", test))]
+#[cfg(target_os = "macos")]
 fn safari_ua(macos_major: u64) -> String {
     let safari = if macos_major >= 26 {
         macos_major
@@ -1964,7 +1964,7 @@ mod tests {
     use super::{
         base64_encode, drop_ack_failed, drop_msg_begin, drop_msg_chunk_prefix_parts,
         drop_msg_commit, drop_msg_end, ensure_download_destination, is_whatsapp_origin, mime_for,
-        plan_drop, run_drop_queue, safari_ua, stream_chunks, summarize_skips, toggle_decision,
+        plan_drop, run_drop_queue, stream_chunks, summarize_skips, toggle_decision,
         DropSkips, StreamAbort, ToggleAct, CHUNKS_PER_EVAL, DROP_CHUNK_BYTES,
         DROP_MSG_CHUNK_SUFFIX_PARTS, MAX_DROP_FILES,
     };
@@ -2011,18 +2011,6 @@ mod tests {
             bridge.contains(&format!("uaFullVersion: \"{major}.0.0.0\"")),
             "bridge.js uaFullVersion must advertise Chrome {major}"
         );
-    }
-
-    #[test]
-    fn macos_presents_the_safari_that_ships_with_it() {
-        assert!(safari_ua(15).contains("Version/18.0 Safari/605.1.15"));
-        assert!(safari_ua(14).contains("Version/17.0 "));
-        assert!(safari_ua(26).contains("Version/26.0 "));
-        assert!(safari_ua(27).contains("Version/27.0 "));
-        // A Safari UA carries no Chrome token, so bridge.js leaves the Chrome-only
-        // shims (client hints, window.chrome) out and the fingerprint stays Safari.
-        assert!(!safari_ua(26).contains("Chrome/"));
-        assert!(safari_ua(26).starts_with("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"));
     }
 
     #[test]

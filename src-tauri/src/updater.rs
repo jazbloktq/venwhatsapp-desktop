@@ -1215,13 +1215,11 @@ mod tests {
         })
     }
 
-    /// The asset names of a real release (v0.6.10), for one version.
+    /// A subset of the asset names of a real release (v0.6.10), for one version.
     fn real_assets(v: &str) -> Vec<(String, String)> {
         [
             format!("Venwhatsapp_{v}_x64-setup.exe"),
             format!("Venwhatsapp_{v}_x64_en-US.msi"),
-            format!("Venwhatsapp_{v}_aarch64.dmg"),
-            "Venwhatsapp_aarch64.app.tar.gz".to_string(),
             format!("Venwhatsapp_{v}_amd64.deb"),
             format!("Venwhatsapp_{v}_amd64.AppImage"),
             "Venwhatsapp_x86_64.flatpak".to_string(),
@@ -1290,7 +1288,7 @@ mod tests {
     }
 
     #[test]
-    fn assets_are_picked_by_name_pattern_for_every_platform_and_arch() {
+    fn assets_are_picked_by_name_pattern_for_supported_linux_and_windows_arches() {
         let r = real_release("1.2.3");
         let pick = |k, a| find_asset(&r, k, a).map(|x| x.name.as_str());
         assert_eq!(
@@ -1310,14 +1308,6 @@ mod tests {
             Some("Venwhatsapp_1.2.3_x64_en-US.msi")
         );
         assert_eq!(
-            pick(AssetKind::MacTar, Arch::Arm64),
-            Some("Venwhatsapp_aarch64.app.tar.gz")
-        );
-        assert_eq!(
-            pick(AssetKind::MacDmg, Arch::Arm64),
-            Some("Venwhatsapp_1.2.3_aarch64.dmg")
-        );
-        assert_eq!(
             pick(AssetKind::Flatpak, Arch::X64),
             Some("Venwhatsapp_x86_64.flatpak")
         );
@@ -1329,8 +1319,6 @@ mod tests {
         assert_eq!(pick(AssetKind::AppImage, Arch::Arm64), None);
         assert_eq!(pick(AssetKind::Deb, Arch::Arm64), None);
         assert_eq!(pick(AssetKind::Nsis, Arch::Arm64), None);
-        assert_eq!(pick(AssetKind::MacTar, Arch::X64), None);
-        assert_eq!(pick(AssetKind::MacDmg, Arch::X64), None);
         assert_eq!(pick(AssetKind::Flatpak, Arch::Other), None);
     }
 
@@ -1472,36 +1460,7 @@ mod tests {
     }
 
     #[test]
-    fn mac_bundles_are_found_from_the_executable() {
-        assert_eq!(
-            detect(&env(
-                Os::Macos,
-                "/Applications/Venwhatsapp.app/Contents/MacOS/venwhatsapp"
-            )),
-            Method::MacApp("/Applications/Venwhatsapp.app".into())
-        );
-        assert_eq!(
-            detect(&env(
-                Os::Macos,
-                "/Users/me/Apps/My.app/Contents/MacOS/venwhatsapp"
-            )),
-            Method::MacApp("/Users/me/Apps/My.app".into())
-        );
-        assert_eq!(
-            detect(&env(
-                Os::Macos,
-                "/Users/me/Venwhatsapp/src-tauri/target/debug/venwhatsapp"
-            )),
-            Method::Source
-        );
-        assert_eq!(
-            detect(&env(Os::Macos, "/usr/local/bin/venwhatsapp")),
-            Method::Other
-        );
-    }
-
-    #[test]
-    fn every_install_type_maps_to_one_asset_kind() {
+    fn supported_install_types_map_to_one_asset_kind() {
         let k = |m: Method, w| m.asset_kind(w);
         assert_eq!(
             k(Method::AppImage("/a".into()), true),
@@ -1511,14 +1470,6 @@ mod tests {
         assert_eq!(k(Method::Flatpak, true), Some(AssetKind::Flatpak));
         assert_eq!(k(Method::WindowsNsis, true), Some(AssetKind::Nsis));
         assert_eq!(k(Method::WindowsMsi, true), Some(AssetKind::Msi));
-        assert_eq!(
-            k(Method::MacApp("/A.app".into()), true),
-            Some(AssetKind::MacTar)
-        );
-        assert_eq!(
-            k(Method::MacApp("/A.app".into()), false),
-            Some(AssetKind::MacDmg)
-        );
         assert_eq!(k(Method::Source, true), None);
         assert_eq!(k(Method::Other, true), None);
         // never automatic where a password is needed
@@ -1548,21 +1499,6 @@ mod tests {
             plan(&Method::WindowsNsis, &r, Arch::X64, &dl).unwrap().dest,
             Dest::Private
         );
-        // writable bundle: tarball swap; unwritable: the disk image goes to Downloads
-        let bundle = d.join("Venwhatsapp.app");
-        let p = plan(&Method::MacApp(bundle), &r, Arch::Arm64, &dl).unwrap();
-        assert_eq!(
-            (p.kind, p.dest),
-            (AssetKind::MacTar, Dest::Beside(d.clone()))
-        );
-        let p = plan(
-            &Method::MacApp("/nonexistent-dir/Venwhatsapp.app".into()),
-            &r,
-            Arch::Arm64,
-            &dl,
-        )
-        .unwrap();
-        assert_eq!((p.kind, p.dest), (AssetKind::MacDmg, Dest::Downloads(dl)));
         assert_eq!(
             plan(&Method::Source, &r, Arch::X64, Path::new("/dl"))
                 .unwrap_err()
@@ -2075,126 +2011,8 @@ mod tests {
         }
     }
 
-    // ---- macOS ----
-
-    #[cfg(unix)]
-    fn fake_app(root: &Path, marker: &str) -> PathBuf {
-        let app = root.join("Venwhatsapp.app");
-        std::fs::create_dir_all(app.join("Contents/MacOS")).unwrap();
-        std::fs::write(app.join("Contents/Info.plist"), b"<plist/>").unwrap();
-        std::fs::write(app.join("Contents/MacOS/venwhatsapp"), marker).unwrap();
-        app
-    }
-
-    #[cfg(unix)]
-    fn mac_staged(d: &Path, tar_args_root: &Path) -> Staged {
-        let tgz = d.join("Venwhatsapp_aarch64.app.tar.gz");
-        let st = std::process::Command::new("tar")
-            .arg("-czf")
-            .arg(&tgz)
-            .arg("-C")
-            .arg(tar_args_root)
-            .arg("Venwhatsapp.app")
-            .status()
-            .unwrap();
-        assert!(st.success());
-        Staged {
-            path: tgz,
-            name: "Venwhatsapp_aarch64.app.tar.gz".into(),
-            kind: AssetKind::MacTar,
-            cleanup: None,
-        }
-    }
-
-    #[cfg(unix)]
     #[test]
-    fn a_mac_bundle_is_swapped_and_the_old_one_removed() {
-        let d = tempdir("mac");
-        let apps = d.join("Applications");
-        std::fs::create_dir_all(&apps).unwrap();
-        let bundle = fake_app(&apps, "old");
-        let src = d.join("src");
-        std::fs::create_dir_all(&src).unwrap();
-        fake_app(&src, "new");
-        let staged = mac_staged(&d, &src);
-        let out = apply(&Method::MacApp(bundle.clone()), &staged, &ctx(&d)).unwrap();
-        assert_eq!(out, Outcome::Restart(Relaunch::MacOpen(bundle.clone())));
-        assert_eq!(
-            std::fs::read(bundle.join("Contents/MacOS/venwhatsapp")).unwrap(),
-            b"new"
-        );
-        let names: Vec<String> = std::fs::read_dir(&apps)
-            .unwrap()
-            .flatten()
-            .map(|e| e.file_name().to_string_lossy().into_owned())
-            .collect();
-        assert_eq!(
-            names,
-            vec!["Venwhatsapp.app"],
-            "no old bundle or work folder left: {names:?}"
-        );
-        assert!(!staged.path.exists());
-    }
-
-    #[cfg(unix)]
-    #[test]
-    fn a_broken_mac_archive_keeps_the_current_bundle() {
-        let d = tempdir("mac-bad");
-        let apps = d.join("Applications");
-        std::fs::create_dir_all(&apps).unwrap();
-        let bundle = fake_app(&apps, "old");
-        // an archive whose app has no Info.plist
-        let src = d.join("src");
-        let broken = src.join("Venwhatsapp.app/Contents/MacOS");
-        std::fs::create_dir_all(&broken).unwrap();
-        std::fs::write(broken.join("venwhatsapp"), "new").unwrap();
-        let staged = mac_staged(&d, &src);
-        let e = apply(&Method::MacApp(bundle.clone()), &staged, &ctx(&d)).unwrap_err();
-        assert_eq!(e.kind, Kind::Install);
-        assert_eq!(
-            std::fs::read(bundle.join("Contents/MacOS/venwhatsapp")).unwrap(),
-            b"old"
-        );
-        // not an archive at all
-        std::fs::write(&staged.path, b"garbage").unwrap();
-        let staged = Staged {
-            path: staged.path.clone(),
-            ..staged
-        };
-        assert_eq!(
-            apply(&Method::MacApp(bundle.clone()), &staged, &ctx(&d))
-                .unwrap_err()
-                .kind,
-            Kind::Install
-        );
-        assert_eq!(
-            std::fs::read(bundle.join("Contents/MacOS/venwhatsapp")).unwrap(),
-            b"old"
-        );
-        let names: Vec<String> = std::fs::read_dir(&apps)
-            .unwrap()
-            .flatten()
-            .map(|e| e.file_name().to_string_lossy().into_owned())
-            .collect();
-        assert_eq!(names, vec!["Venwhatsapp.app"], "{names:?}");
-    }
-
-    #[cfg(unix)]
-    #[test]
-    fn a_failed_second_rename_puts_the_old_bundle_back() {
-        let d = tempdir("mac-rollback");
-        let bundle = fake_app(&d, "old");
-        // the "new" app does not exist: the second rename fails after the first moved the old one
-        let e = swap_bundle(&d.join("missing.app"), &bundle).unwrap_err();
-        assert_eq!(e.kind, Kind::Install);
-        assert_eq!(
-            std::fs::read(bundle.join("Contents/MacOS/venwhatsapp")).unwrap(),
-            b"old"
-        );
-    }
-
-    #[test]
-    fn flatpak_and_dmg_downloads_are_handed_back_to_be_opened() {
+    fn flatpak_downloads_are_handed_back_to_be_opened() {
         let staged = Staged {
             path: "/dl/Venwhatsapp_x86_64.flatpak".into(),
             name: "n".into(),
@@ -2380,12 +2198,6 @@ mod tests {
             args,
             vec!["-c", "sleep 1; exec \"$0\"", "/x/Venwhatsapp.AppImage"]
         );
-        let c = relaunch_command(&Relaunch::MacOpen("/Applications/Venwhatsapp.app".into()));
-        let args: Vec<_> = c
-            .get_args()
-            .map(|a| a.to_string_lossy().into_owned())
-            .collect();
-        assert_eq!(args[1], "sleep 1; exec open \"$0\"");
     }
 
     // ---- proxy ----

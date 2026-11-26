@@ -41,9 +41,9 @@
 *::-webkit-scrollbar-corner { background: transparent; }
 html, body { height: 100%; overflow: hidden; }
 html.embedded-panel { background: var(--bg); }
-html.embedded-panel body { opacity: 0; transform: translateY(14px) scale(.99); transform-origin: top center; transition: opacity .24s ease, transform .28s cubic-bezier(.2,.8,.2,1); }
+html.embedded-panel body { transform-origin: top center; }
+html.embedded-panel:not(.panel-open) body { opacity: 0; transform: translateY(14px) scale(.99); }
 html.embedded-panel.panel-open body { opacity: 1; transform: translateY(0) scale(1); }
-@media(prefers-reduced-motion:reduce) { html.embedded-panel body { transition: none; } }
 body {
   margin: 0; display: flex; flex-direction: column;
   background: var(--bg); color: var(--fg);
@@ -173,14 +173,14 @@ select option { background: var(--bg); color: var(--fg); }
 
 #sec-seguranca { --security-control-radius:8px; }
 #sec-seguranca input[type=password], #sec-seguranca input[type=number], #sec-seguranca button { border-radius:var(--security-control-radius); }
-.privacy-disclosure { margin:28px 0 0; border:0; border-top:1px solid var(--border); border-radius:0; background:transparent; overflow:visible; }
+.privacy-disclosure { margin:28px 0 0; border:0; border-top:1px solid var(--border); border-radius:0; background:transparent; overflow:visible; user-select:none; -webkit-user-select:none; }
 .privacy-disclosure > summary { position:relative; display:flex; align-items:center; min-height:54px; padding:12px 36px 12px 0; border-radius:var(--security-control-radius); font-size:15px; font-weight:600; cursor:pointer; list-style:none; transition:background .16s ease; }
 .privacy-disclosure > summary::-webkit-details-marker { display:none; }
 .privacy-disclosure > summary::after { content:""; position:absolute; right:4px; top:50%; width:16px; height:16px; transform:translateY(-50%); background-image:var(--chevron); background-repeat:no-repeat; background-size:contain; transition:transform .16s ease; }
 .privacy-disclosure[open] > summary::after { transform:translateY(-50%) rotate(180deg); }
 .privacy-disclosure[open] > summary { border-bottom:1px solid var(--border); }
 .privacy-disclosure > summary:hover { background:var(--hover); }
-.privacy-content { animation:privacy-content-in .24s cubic-bezier(.2,.8,.2,1) both; }
+.privacy-content.privacy-content-enter { animation:privacy-content-in .24s cubic-bezier(.2,.8,.2,1) both; }
 @keyframes privacy-content-in { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
 .privacy-content-rail { margin:12px 0 8px 10px; padding-left:16px; border-left:1px solid var(--line); }
 .privacy-description { margin:0 0 8px; color:var(--fg); font-size:13px; line-height:1.5; }
@@ -194,7 +194,7 @@ select option { background: var(--bg); color: var(--fg); }
 .privacy-slider-row input[type=range] { flex:0 1 260px; width:100%; min-width:80px; accent-color:var(--green); }
 .privacy-slider-row input[type=range]:disabled { accent-color:var(--switch-off); cursor:not-allowed; }
 .privacy-slider-row output { flex:0 0 48px; color:var(--fg); text-align:right; font-size:13px; }
-@media(prefers-reduced-motion:reduce) { .privacy-content { animation:none; } .privacy-disclosure > summary::after { transition:none; } }
+@media(prefers-reduced-motion:reduce) { .privacy-content.privacy-content-enter { animation:none; } .privacy-disclosure > summary::after { transition:none; } }
 
 /* Settings -> Updates */
 .upd-panel { margin-top: 24px; padding: 16px 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }

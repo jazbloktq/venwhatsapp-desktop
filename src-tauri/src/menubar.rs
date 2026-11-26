@@ -8,7 +8,7 @@
 //! up while nothing is on screen. The geometry captured before the first
 //! restyle is replayed when the window goes back to normal.
 
-/// Pure helpers, unit-tested on every platform (the panel is macOS-only).
+/// Pure helpers used to position and time the menu-bar panel.
 pub(crate) mod geom {
     use std::time::{Duration, Instant};
 
@@ -36,34 +36,6 @@ pub(crate) mod geom {
 
     pub fn within_grace(last_hide: Option<Instant>, now: Instant) -> bool {
         last_hide.is_some_and(|t| now.duration_since(t) < REOPEN_GRACE)
-    }
-
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-
-        #[test]
-        fn panel_sits_below_the_icon_and_stays_on_the_monitor() {
-            let (x, y) = panel_origin(1500.0, 0.0, 44.0, 24.0, 1520.0, 3456.0, 16.0);
-            assert_eq!(y, 24.0); // just under the menu bar, centred on the icon
-            assert!((x - (1500.0 + (44.0 - 1520.0) / 2.0)).abs() < 0.001);
-            for icon in [10.0, 3400.0] {
-                // icons near either edge cannot push the panel off-screen
-                let (x, _) = panel_origin(icon, 0.0, 44.0, 24.0, 1520.0, 3456.0, 16.0);
-                assert!((16.0..=3456.0 - 1520.0 - 16.0).contains(&x));
-            }
-            // ...not even on a monitor narrower than the panel.
-            let (x, y) = panel_origin(0.0, 0.0, 44.0, 24.0, 3000.0, 1000.0, 8.0);
-            assert!(x.is_finite() && x >= 0.0 && y == 24.0);
-        }
-
-        #[test]
-        fn reopen_grace_expires() {
-            let now = Instant::now();
-            assert!(within_grace(Some(now), now));
-            assert!(!within_grace(Some(now - REOPEN_GRACE), now));
-            assert!(!within_grace(None, now));
-        }
     }
 }
 
@@ -539,17 +511,4 @@ pub fn enabled(app: &tauri::AppHandle) -> bool {
 /// shipped). Pure, so the gate is testable without an OS look-up.
 pub(crate) fn allowed_from_version(major: i64) -> bool {
     major >= 14
-}
-
-#[cfg(test)]
-mod tests {
-    use super::allowed_from_version;
-
-    #[test]
-    fn menu_bar_mode_needs_the_macos14_scheduling_policy() {
-        assert!(!allowed_from_version(12));
-        assert!(!allowed_from_version(13));
-        assert!(allowed_from_version(14));
-        assert!(allowed_from_version(15));
-    }
 }

@@ -267,7 +267,6 @@ fn show_lock_window_inner(app: &AppHandle) {
         .inner_size(420.0, 540.0)
         .resizable(false)
         .decorations(false)
-        .always_on_top(true)
         .content_protected(true)
         .center()
         .focused(true)
